@@ -19,6 +19,12 @@ export default function App() {
   const [ecstasy, setEcstasy] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
+  // Add the missing faction bonuses state
+  const [factionBonuses, setFactionBonuses] = useState({
+    aggression: 0,
+    suppression: 0
+  });
+
   useEffect(() => {
     document.documentElement.classList.remove('dark');
     if (darkMode) {
@@ -115,6 +121,59 @@ export default function App() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
                 <ToggleSwitch label="Ecstasy (×2 Happy)" enabled={ecstasy} onToggle={setEcstasy} />
+              </div>
+            </div>
+
+            {/* Simple Test Section */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                🎯 Faction Bonuses
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Aggression Slider */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border-2 border-blue-200 dark:border-blue-800">
+                  <label className="block text-sm font-bold text-blue-700 dark:text-blue-300 mb-3">
+                    Aggression (STR/SPD Bonus): {factionBonuses.aggression}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="20"
+                    value={factionBonuses.aggression}
+                    onChange={(e) => setFactionBonuses(prev => ({ 
+                      ...prev, 
+                      aggression: parseInt(e.target.value) 
+                    }))}
+                    className="w-full h-4 bg-blue-200 rounded-lg appearance-none cursor-pointer dark:bg-blue-700"
+                  />
+                  <div className="flex justify-between text-xs text-blue-600 dark:text-blue-400 mt-2">
+                    <span>0%</span>
+                    <span>20%</span>
+                  </div>
+                </div>
+
+                {/* Suppression Slider */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border-2 border-purple-200 dark:border-purple-800">
+                  <label className="block text-sm font-bold text-purple-700 dark:text-purple-300 mb-3">
+                    Suppression (DEF/DEX Bonus): {factionBonuses.suppression}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="20"
+                    value={factionBonuses.suppression}
+                    onChange={(e) => setFactionBonuses(prev => ({ 
+                      ...prev, 
+                      suppression: parseInt(e.target.value) 
+                    }))}
+                    className="w-full h-4 bg-purple-200 rounded-lg appearance-none cursor-pointer dark:bg-purple-700"
+                  />
+                  <div className="flex justify-between text-xs text-purple-600 dark:text-purple-400 mt-2">
+                    <span>0%</span>
+                    <span>20%</span>
+                  </div>
+                </div>
               </div>
             </div>
 
