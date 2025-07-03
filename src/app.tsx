@@ -63,7 +63,7 @@ export default function App() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-              💪 Torn Gym Analyzer
+              💪 Torn Gym Stats Calculator
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
               Calculate and optimize your gym training gains with precision
