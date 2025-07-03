@@ -25,6 +25,13 @@ const StatsInput: React.FC<Props> = ({ stats, onChange }) => {
     }
   }, [stats, focusedField]);
 
+  // Function to clean numbers with commas and dots
+  const cleanNumber = (value: string): number => {
+    // Remove commas and handle different decimal separators
+    const cleaned = value.replace(/,/g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
   const handleFocus = (key: string) => {
     setFocusedField(key);
     const currentValue = stats[key as keyof typeof stats];
@@ -35,7 +42,7 @@ const StatsInput: React.FC<Props> = ({ stats, onChange }) => {
 
   const handleBlur = (key: string) => {
     setFocusedField(null);
-    const numValue = parseFloat(displayValues[key as keyof typeof displayValues]) || 0;
+    const numValue = cleanNumber(displayValues[key as keyof typeof displayValues]);
     onChange({ ...stats, [key]: numValue });
     setDisplayValues(prev => ({ ...prev, [key]: numValue.toString() }));
   };
@@ -53,12 +60,13 @@ const StatsInput: React.FC<Props> = ({ stats, onChange }) => {
           </label>
           <div className="relative">
             <input
-              type="number"
+              type="text"
               name={key}
               value={displayValues[key]}
               onChange={(e) => handleChange(key, e.target.value)}
               onFocus={() => handleFocus(key)}
               onBlur={() => handleBlur(key)}
+              placeholder="e.g. 1,000,000"
               className="w-full px-4 py-3 text-lg font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 hover:border-gray-300 dark:hover:border-gray-500"
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">

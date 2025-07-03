@@ -1,5 +1,5 @@
 {
-  "name": "torn-gym-analyzer",
+  "name": "gym-stats-calculator",
   "version": "1.0.0",
   "private": true,
   "scripts": {
