@@ -204,7 +204,7 @@ export default function App() {
               💪 Gym Stats Calculator
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Advanced training calculator with cutting-edge formula and comprehensive perks system
+              Advanced training calculator and comprehensive perks system
             </p>
           </div>
 
@@ -720,7 +720,7 @@ export default function App() {
           {/* Footer Credit */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
-              2025 - Advanced Gym Calculator with Latest Research Formula
+              2025 - dv1sual
             </p>
           </div>
         </div>
