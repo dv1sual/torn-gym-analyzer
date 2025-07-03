@@ -1,39 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { gyms } from './data/gyms';
-import { computeGain } from './utils/calc';
+import { computeGain, calculateMultipleTrains, TrainingPerks } from './utils/calc';
 import GymSelector from './components/GymSelector';
 import StatsInput from './components/StatsInput';
 import HappyEnergyInput from './components/HappyEnergyInput';
-import MultipliersInput from './components/MultipliersInput';
 import Results from './components/Results';
 import ToggleSwitch from './components/ToggleSwitch';
 
 export default function App() {
-  const [stats, setStats] = useState({ str: 0, def: 0, spd: 0, dex: 0 });
-  const [multipliers, setMultipliers] = useState({ str: 1, def: 1, spd: 1, dex: 1 });
-  const [happy, setHappy] = useState(0);
-  const [energy, setEnergy] = useState(0);
-  const [selectedGym, setSelectedGym] = useState(gyms[0].name);
-  const [results, setResults] = useState<any[]>([]);
-  const [dynamicHappy, setDynamicHappy] = useState(false);
-  const [ecstasy, setEcstasy] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  // Helper function to get initial state from localStorage or use defaults
+  const getInitialState = (key: string, defaultValue: any) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
 
-  // Faction bonuses state
-  const [factionBonuses, setFactionBonuses] = useState({
-    str: 0,
-    def: 0,
-    spd: 0,
-    dex: 0
-  });
+  const [stats, setStats] = useState(() => getInitialState('gymCalc_stats', { str: 0, def: 0, spd: 0, dex: 0 }));
+  const [happy, setHappy] = useState(() => getInitialState('gymCalc_happy', 0));
+  const [energy, setEnergy] = useState(() => getInitialState('gymCalc_energy', 0));
+  const [selectedGym, setSelectedGym] = useState(() => getInitialState('gymCalc_selectedGym', gyms[0].name));
+  const [results, setResults] = useState<any[]>([]);
+  const [dynamicHappy, setDynamicHappy] = useState(() => getInitialState('gymCalc_dynamicHappy', false));
+  const [darkMode, setDarkMode] = useState(() => getInitialState('gymCalc_darkMode', false));
 
   // Energy allocation state
-  const [energyAllocation, setEnergyAllocation] = useState({
+  const [energyAllocation, setEnergyAllocation] = useState(() => getInitialState('gymCalc_energyAllocation', {
     str: 25,
     def: 25,
     spd: 25,
     dex: 25
-  });
+  }));
+
+  // Comprehensive perks state
+  const [perks, setPerks] = useState<TrainingPerks>(() => getInitialState('gymCalc_perks', {
+    // Education bonuses
+    sportsScience: false,
+    nutritionalScience: false,
+    analysisPerformance: false,
+    individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
+    
+    // Book bonuses
+    allStatsBook: false,
+    individualStatBooks: { str: false, def: false, spd: false, dex: false },
+    generalGymBook: false,
+    specificGymBooks: { str: false, def: false, spd: false, dex: false },
+    
+    // Faction bonuses
+    aggression: 0,
+    suppression: 0,
+    steadfast: { str: 0, def: 0, spd: 0, dex: 0 },
+    
+    // Company & Job bonuses
+    heavyLifting: 0,
+    rockSalt: 0,
+    roidRage: 0,
+    sportsShoes: false,
+    
+    // Merit bonuses (converted from old system)
+    merits: { str: 0, def: 0, spd: 0, dex: 0 }
+  }));
 
   const [allocationResults, setAllocationResults] = useState<any>(null);
 
@@ -43,6 +71,39 @@ export default function App() {
       document.documentElement.classList.add('dark');
     }
   }, [darkMode]);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('gymCalc_stats', JSON.stringify(stats));
+  }, [stats]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_happy', JSON.stringify(happy));
+  }, [happy]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_energy', JSON.stringify(energy));
+  }, [energy]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_selectedGym', JSON.stringify(selectedGym));
+  }, [selectedGym]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_dynamicHappy', JSON.stringify(dynamicHappy));
+  }, [dynamicHappy]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_energyAllocation', JSON.stringify(energyAllocation));
+  }, [energyAllocation]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_perks', JSON.stringify(perks));
+  }, [perks]);
 
   const calculateEnergyAllocation = (gym: any, allocation: any) => {
     const totalAllocation = allocation.str + allocation.def + allocation.spd + allocation.dex;
@@ -61,18 +122,25 @@ export default function App() {
     };
 
     const gainsPerStat = { str: 0, def: 0, spd: 0, dex: 0 };
-    let currentHappy = ecstasy ? happy * 2 : happy;
 
     (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
-      for (let i = 0; i < trainsPerStat[key]; i++) {
-        const baseGain = computeGain(stats[key], currentHappy, gym.dots[key], gym.energy);
-        const meritMultiplier = multipliers[key];
-        const factionBonus = 1 + (factionBonuses[key] / 100);
-        const totalGain = baseGain * meritMultiplier * factionBonus;
-        gainsPerStat[key] += totalGain;
-        
+      if (trainsPerStat[key] > 0) {
         if (dynamicHappy) {
-          currentHappy = Math.max(0, currentHappy - gym.energy * 5);
+          // Use multiple trains calculation with dynamic happy loss
+          const result = calculateMultipleTrains(
+            stats[key],
+            happy,
+            gym.dots[key],
+            gym.energy,
+            trainsPerStat[key],
+            key,
+            perks
+          );
+          gainsPerStat[key] = result.totalGain;
+        } else {
+          // Static happy calculation
+          const gain = computeGain(stats[key], happy, gym.dots[key], gym.energy, key, perks);
+          gainsPerStat[key] = gain * trainsPerStat[key];
         }
       }
     });
@@ -88,25 +156,31 @@ export default function App() {
   const runSimulation = () => {
     const sessionResults = gyms.map((gym) => {
       const trains = Math.floor(energy / gym.energy);
-      let currentHappy = ecstasy ? happy * 2 : happy;
       const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
-      let total = 0;
 
-      for (let i = 0; i < trains; i++) {
-        (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
-          const baseGain = computeGain(stats[key], currentHappy, gym.dots[key], gym.energy);
-          // Apply both merit multipliers and faction bonuses
-          const meritMultiplier = multipliers[key];
-          const factionBonus = 1 + (factionBonuses[key] / 100);
-          const totalGain = baseGain * meritMultiplier * factionBonus;
-          perStat[key] += totalGain;
-          total += totalGain;
-        });
-        if (dynamicHappy) {
-          currentHappy = Math.max(0, currentHappy - gym.energy * 5);
+      (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
+        if (trains > 0) {
+          if (dynamicHappy) {
+            // Use multiple trains calculation with dynamic happy loss
+            const result = calculateMultipleTrains(
+              stats[key],
+              happy,
+              gym.dots[key],
+              gym.energy,
+              trains,
+              key,
+              perks
+            );
+            perStat[key] = result.totalGain;
+          } else {
+            // Static happy calculation
+            const gain = computeGain(stats[key], happy, gym.dots[key], gym.energy, key, perks);
+            perStat[key] = gain * trains;
+          }
         }
-      }
+      });
 
+      const total = perStat.str + perStat.def + perStat.spd + perStat.dex;
       return { name: gym.name, perStat, total };
     });
 
@@ -123,14 +197,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 transition-all duration-500">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
               💪 Gym Stats Calculator
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Calculate and optimize your gym training gains with precision
+              Advanced training calculator with cutting-edge formula and comprehensive perks system
             </p>
           </div>
 
@@ -156,15 +230,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Middle Row - Merit Bonuses */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">🏆</span>
-                  Merit Bonuses
-                </h3>
-                <MultipliersInput multipliers={multipliers} onChange={setMultipliers} />
-              </div>
-
               {/* Energy Allocation Section */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -174,7 +239,7 @@ export default function App() {
                 <div className="space-y-4">
                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                     <p className="text-sm text-amber-700 dark:text-amber-300">
-                      <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages. The calculator will determine optimal training splits for your selected gym.
+                      <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages. The calculator uses the cutting-edge formula for maximum accuracy.
                     </p>
                   </div>
                   
@@ -195,7 +260,7 @@ export default function App() {
                             min="0"
                             max="100"
                             value={energyAllocation[key]}
-                            onChange={(e) => setEnergyAllocation(prev => ({
+                            onChange={(e) => setEnergyAllocation((prev: { str: number; def: number; spd: number; dex: number }) => ({
                               ...prev,
                               [key]: parseInt(e.target.value) || 0
                             }))}
@@ -232,7 +297,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Bottom Row - Gym Selection */}
+              {/* Gym Selection */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                   <span className="text-2xl">🏋️</span>
@@ -242,132 +307,336 @@ export default function App() {
               </div>
             </div>
 
-            {/* Settings */}
+            {/* Education Bonuses */}
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <span className="text-2xl">⚙️</span>
-                Settings
+                <span className="text-2xl">📚</span>
+                Education Bonuses
               </h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
-                <ToggleSwitch label="Ecstasy (×2 Happy)" enabled={ecstasy} onToggle={setEcstasy} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Bonuses</h4>
+                  <div className="space-y-2">
+                    <ToggleSwitch 
+                      label="Sports Science Bachelor (+2% all stats)" 
+                      enabled={perks.sportsScience} 
+                      onToggle={(val) => setPerks(prev => ({ ...prev, sportsScience: val }))} 
+                    />
+                    <ToggleSwitch 
+                      label="Nutritional Science (+2% STR/SPD)" 
+                      enabled={perks.nutritionalScience} 
+                      onToggle={(val) => setPerks(prev => ({ ...prev, nutritionalScience: val }))} 
+                    />
+                    <ToggleSwitch 
+                      label="Analysis & Performance (+2% DEF/DEX)" 
+                      enabled={perks.analysisPerformance} 
+                      onToggle={(val) => setPerks(prev => ({ ...prev, analysisPerformance: val }))} 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Gym Gains Bonuses</h4>
+                  <div className="space-y-2">
+                    <ToggleSwitch 
+                      label="General Gym Book (+20% all gym gains)" 
+                      enabled={perks.generalGymBook} 
+                      onToggle={(val) => setPerks(prev => ({ ...prev, generalGymBook: val }))} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Book Bonuses */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                📖 Book Bonuses (31-day temporary)
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Books</h4>
+                  <div className="space-y-2">
+                    <ToggleSwitch 
+                      label="All Stats +25%" 
+                      enabled={perks.allStatsBook} 
+                      onToggle={(val) => setPerks(prev => ({ ...prev, allStatsBook: val }))} 
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                        <ToggleSwitch 
+                          key={key}
+                          label={`${key.toUpperCase()} +100%`} 
+                          enabled={perks.individualStatBooks[key]} 
+                          onToggle={(val) => setPerks(prev => ({ 
+                            ...prev, 
+                            individualStatBooks: { ...prev.individualStatBooks, [key]: val }
+                          }))} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Gym Gains Books</h4>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                        <ToggleSwitch 
+                          key={key}
+                          label={`${key.toUpperCase()} Gym +30%`} 
+                          enabled={perks.specificGymBooks[key]} 
+                          onToggle={(val) => setPerks(prev => ({ 
+                            ...prev, 
+                            specificGymBooks: { ...prev.specificGymBooks, [key]: val }
+                          }))} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Faction Bonuses */}
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                🎯 Faction Gym Gains (Steadfast)
+                ⚔️ Faction Bonuses
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Steadfast STR Slider */}
-                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border-2 border-red-200 dark:border-red-800">
-                  <label className="block text-lg font-bold text-red-700 dark:text-red-300 mb-4">
-                    Steadfast STR Gym Gains: {factionBonuses.str}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={factionBonuses.str}
-                    onChange={(e) => setFactionBonuses(prev => ({ 
-                      ...prev, 
-                      str: parseInt(e.target.value) 
-                    }))}
-                    className="w-full h-6 bg-red-200 rounded-lg appearance-none cursor-pointer dark:bg-red-700"
-                    style={{
-                      background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${factionBonuses.str * 5}%, #fca5a5 ${factionBonuses.str * 5}%, #fca5a5 100%)`
-                    }}
-                  />
-                  <div className="flex justify-between text-sm font-medium text-red-600 dark:text-red-400 mt-3">
-                    <span>0%</span>
-                    <span>20%</span>
+                {/* Passive Stat Bonuses */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Bonuses</h4>
+                  
+                  <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border-2 border-orange-200 dark:border-orange-800">
+                    <label className="block text-sm font-bold text-orange-700 dark:text-orange-300 mb-2">
+                      Aggression Branch (STR/SPD): {perks.aggression}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="20"
+                      value={perks.aggression}
+                      onChange={(e) => setPerks(prev => ({ ...prev, aggression: parseInt(e.target.value) }))}
+                      className="w-full h-4 bg-orange-200 rounded-lg appearance-none cursor-pointer dark:bg-orange-700"
+                    />
+                    <div className="flex justify-between text-xs font-medium text-orange-600 dark:text-orange-400 mt-1">
+                      <span>0%</span>
+                      <span>20%</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-4 border-2 border-cyan-200 dark:border-cyan-800">
+                    <label className="block text-sm font-bold text-cyan-700 dark:text-cyan-300 mb-2">
+                      Suppression Branch (DEF/DEX): {perks.suppression}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="20"
+                      value={perks.suppression}
+                      onChange={(e) => setPerks(prev => ({ ...prev, suppression: parseInt(e.target.value) }))}
+                      className="w-full h-4 bg-cyan-200 rounded-lg appearance-none cursor-pointer dark:bg-cyan-700"
+                    />
+                    <div className="flex justify-between text-xs font-medium text-cyan-600 dark:text-cyan-400 mt-1">
+                      <span>0%</span>
+                      <span>20%</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Steadfast DEF Slider */}
-                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-2 border-green-200 dark:border-green-800">
-                  <label className="block text-lg font-bold text-green-700 dark:text-green-300 mb-4">
-                    Steadfast DEF Gym Gains: {factionBonuses.def}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={factionBonuses.def}
-                    onChange={(e) => setFactionBonuses(prev => ({ 
-                      ...prev, 
-                      def: parseInt(e.target.value) 
-                    }))}
-                    className="w-full h-6 bg-green-200 rounded-lg appearance-none cursor-pointer dark:bg-green-700"
-                    style={{
-                      background: `linear-gradient(to right, #22c55e 0%, #22c55e ${factionBonuses.def * 5}%, #86efac ${factionBonuses.def * 5}%, #86efac 100%)`
-                    }}
-                  />
-                  <div className="flex justify-between text-sm font-medium text-green-600 dark:text-green-400 mt-3">
-                    <span>0%</span>
-                    <span>20%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Add SPD/DEX sliders */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                {/* Steadfast SPD Slider */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-2 border-blue-200 dark:border-blue-800">
-                  <label className="block text-lg font-bold text-blue-700 dark:text-blue-300 mb-4">
-                    Steadfast SPD Gym Gains: {factionBonuses.spd}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={factionBonuses.spd}
-                    onChange={(e) => setFactionBonuses(prev => ({ 
-                      ...prev, 
-                      spd: parseInt(e.target.value) 
-                    }))}
-                    className="w-full h-6 bg-blue-200 rounded-lg appearance-none cursor-pointer dark:bg-blue-700"
-                    style={{
-                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${factionBonuses.spd * 5}%, #93c5fd ${factionBonuses.spd * 5}%, #93c5fd 100%)`
-                    }}
-                  />
-                  <div className="flex justify-between text-sm font-medium text-blue-600 dark:text-blue-400 mt-3">
-                    <span>0%</span>
-                    <span>20%</span>
-                  </div>
-                </div>
-
-                {/* Steadfast DEX Slider */}
-                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
-                  <label className="block text-lg font-bold text-purple-700 dark:text-purple-300 mb-4">
-                    Steadfast DEX Gym Gains: {factionBonuses.dex}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={factionBonuses.dex}
-                    onChange={(e) => setFactionBonuses(prev => ({ 
-                      ...prev, 
-                      dex: parseInt(e.target.value) 
-                    }))}
-                    className="w-full h-6 bg-purple-200 rounded-lg appearance-none cursor-pointer dark:bg-purple-700"
-                    style={{
-                      background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${factionBonuses.dex * 5}%, #c4b5fd ${factionBonuses.dex * 5}%, #c4b5fd 100%)`
-                    }}
-                  />
-                  <div className="flex justify-between text-sm font-medium text-purple-600 dark:text-purple-400 mt-3">
-                    <span>0%</span>
-                    <span>20%</span>
+                {/* Gym Gains Bonuses */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Steadfast Gym Gains</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                      <div key={key} className={`${
+                        key === 'str' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                        key === 'def' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                        key === 'spd' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' :
+                        'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
+                      } rounded-lg p-3 border-2`}>
+                        <label className={`block text-xs font-bold mb-2 ${
+                          key === 'str' ? 'text-red-700 dark:text-red-300' :
+                          key === 'def' ? 'text-green-700 dark:text-green-300' :
+                          key === 'spd' ? 'text-blue-700 dark:text-blue-300' :
+                          'text-purple-700 dark:text-purple-300'
+                        }`}>
+                          {key.toUpperCase()}: {perks.steadfast[key]}%
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          value={perks.steadfast[key]}
+                          onChange={(e) => setPerks(prev => ({ 
+                            ...prev, 
+                            steadfast: { ...prev.steadfast, [key]: parseInt(e.target.value) }
+                          }))}
+                          className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="mt-6 p-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  <strong>Note:</strong> Steadfast bonuses are gym gains multipliers (typically 0-10%, but can go up to 20%). Each level in a Steadfast sub-branch increases that specific stat's gym gains by 1%. Only one stat can be upgraded above 10% at a time - factions usually rotate between stats.
+            {/* Company & Job Bonuses */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                🏢 Company & Job Bonuses
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Job Point Specials</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[100px]">Heavy Lifting (STR)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="1000"
+                        value={perks.heavyLifting}
+                        onChange={(e) => setPerks(prev => ({ ...prev, heavyLifting: parseInt(e.target.value) || 0 }))}
+                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Job points"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[100px]">Rock Salt (DEF)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="1000"
+                        value={perks.rockSalt}
+                        onChange={(e) => setPerks(prev => ({ ...prev, rockSalt: parseInt(e.target.value) || 0 }))}
+                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Job points"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[100px]">Roid Rage (STR)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="1000"
+                        value={perks.roidRage}
+                        onChange={(e) => setPerks(prev => ({ ...prev, roidRage: parseInt(e.target.value) || 0 }))}
+                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Job points"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Items & Merit Bonuses</h4>
+                  <div className="space-y-3">
+                    <ToggleSwitch 
+                      label="Sports Shoes (+5% SPD gym gains)" 
+                      enabled={perks.sportsShoes} 
+                      onToggle={(val) => setPerks(prev => ({ ...prev, sportsShoes: val }))} 
+                    />
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <label className={`text-xs font-medium min-w-[40px] ${
+                            key === 'str' ? 'text-red-600 dark:text-red-400' :
+                            key === 'def' ? 'text-green-600 dark:text-green-400' :
+                            key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
+                            'text-purple-600 dark:text-purple-400'
+                          }`}>
+                            {key.toUpperCase()} Merit
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={perks.merits[key]}
+                            onChange={(e) => setPerks(prev => ({ 
+                              ...prev, 
+                              merits: { ...prev.merits, [key]: parseInt(e.target.value) || 0 }
+                            }))}
+                            className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-16"
+                            placeholder="0"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Advanced Settings */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <span className="text-2xl">⚙️</span>
+                Advanced Settings
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-6 items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
+                  <ToggleSwitch label="Dynamic Happy Loss" enabled={dynamicHappy} onToggle={setDynamicHappy} />
+                </div>
+                <div className="flex items-center">
+                  <label className="mr-3 text-sm font-medium text-gray-700 dark:text-gray-200">Reset All Settings</label>
+                  <button
+                    onClick={() => {
+                      if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                        // Clear localStorage
+                        Object.keys(localStorage).forEach(key => {
+                          if (key.startsWith('gymCalc_')) {
+                            localStorage.removeItem(key);
+                          }
+                        });
+                        // Reset all state to defaults
+                        setStats({ str: 0, def: 0, spd: 0, dex: 0 });
+                        setHappy(0);
+                        setEnergy(0);
+                        setSelectedGym(gyms[0].name);
+                        setDynamicHappy(false);
+                        setDarkMode(false);
+                        setEnergyAllocation({ str: 25, def: 25, spd: 25, dex: 25 });
+                        setPerks({
+                          sportsScience: false,
+                          nutritionalScience: false,
+                          analysisPerformance: false,
+                          individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
+                          allStatsBook: false,
+                          individualStatBooks: { str: false, def: false, spd: false, dex: false },
+                          generalGymBook: false,
+                          specificGymBooks: { str: false, def: false, spd: false, dex: false },
+                          aggression: 0,
+                          suppression: 0,
+                          steadfast: { str: 0, def: 0, spd: 0, dex: 0 },
+                          heavyLifting: 0,
+                          rockSalt: 0,
+                          roidRage: 0,
+                          sportsShoes: false,
+                          merits: { str: 0, def: 0, spd: 0, dex: 0 }
+                        });
+                        setResults([]);
+                        setAllocationResults(null);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-800 min-w-[44px] h-6"
+                  >
+                    <span className="text-xs mr-1">🗑️</span>
+                    Reset
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>💾 Auto-Save:</strong> Your settings are automatically saved and will persist between browser sessions.
                 </p>
               </div>
             </div>
@@ -380,7 +649,7 @@ export default function App() {
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🔥</span>
-                  Compute Maximum Gains
+                  Compute Maximum Gains (Cutting-Edge Formula)
                   <span className="text-2xl">🔥</span>
                 </span>
               </button>
@@ -393,7 +662,7 @@ export default function App() {
           {/* Footer Credit */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
-              2025 - dv1sual
+              2025 - Advanced Gym Calculator with Latest Research Formula
             </p>
           </div>
         </div>
