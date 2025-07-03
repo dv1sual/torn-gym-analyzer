@@ -260,6 +260,16 @@ export default function App() {
                             min="0"
                             max="100"
                             value={energyAllocation[key]}
+                            onFocus={(e) => {
+                              if (e.target.value === '0') {
+                                e.target.value = '';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value === '') {
+                                e.target.value = '0';
+                              }
+                            }}
                             onChange={(e) => setEnergyAllocation((prev: { str: number; def: number; spd: number; dex: number }) => ({
                               ...prev,
                               [key]: parseInt(e.target.value) || 0
@@ -314,35 +324,31 @@ export default function App() {
                 Education Bonuses
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Bonuses</h4>
-                  <div className="space-y-2">
-                    <ToggleSwitch 
-                      label="Sports Science Bachelor (+2% all stats)" 
-                      enabled={perks.sportsScience} 
-                      onToggle={(val) => setPerks(prev => ({ ...prev, sportsScience: val }))} 
-                    />
-                    <ToggleSwitch 
-                      label="Nutritional Science (+2% STR/SPD)" 
-                      enabled={perks.nutritionalScience} 
-                      onToggle={(val) => setPerks(prev => ({ ...prev, nutritionalScience: val }))} 
-                    />
-                    <ToggleSwitch 
-                      label="Analysis & Performance (+2% DEF/DEX)" 
-                      enabled={perks.analysisPerformance} 
-                      onToggle={(val) => setPerks(prev => ({ ...prev, analysisPerformance: val }))} 
-                    />
-                  </div>
+                  <ToggleSwitch 
+                    label="Sports Science Bachelor (+2% all stats)" 
+                    enabled={perks.sportsScience} 
+                    onToggle={(val) => setPerks(prev => ({ ...prev, sportsScience: val }))} 
+                  />
+                  <ToggleSwitch 
+                    label="Nutritional Science (+2% STR/SPD)" 
+                    enabled={perks.nutritionalScience} 
+                    onToggle={(val) => setPerks(prev => ({ ...prev, nutritionalScience: val }))} 
+                  />
+                  <ToggleSwitch 
+                    label="Analysis & Performance (+2% DEF/DEX)" 
+                    enabled={perks.analysisPerformance} 
+                    onToggle={(val) => setPerks(prev => ({ ...prev, analysisPerformance: val }))} 
+                  />
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h4 className="font-medium text-gray-900 dark:text-gray-100">Gym Gains Bonuses</h4>
-                  <div className="space-y-2">
-                    <ToggleSwitch 
-                      label="General Gym Book (+20% all gym gains)" 
-                      enabled={perks.generalGymBook} 
-                      onToggle={(val) => setPerks(prev => ({ ...prev, generalGymBook: val }))} 
-                    />
-                  </div>
+                  <ToggleSwitch 
+                    label="General Gym Book (+20% all gym gains)" 
+                    enabled={perks.generalGymBook} 
+                    onToggle={(val) => setPerks(prev => ({ ...prev, generalGymBook: val }))} 
+                  />
                 </div>
               </div>
             </div>
@@ -354,46 +360,42 @@ export default function App() {
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Books</h4>
-                  <div className="space-y-2">
-                    <ToggleSwitch 
-                      label="All Stats +25%" 
-                      enabled={perks.allStatsBook} 
-                      onToggle={(val) => setPerks(prev => ({ ...prev, allStatsBook: val }))} 
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                        <ToggleSwitch 
-                          key={key}
-                          label={`${key.toUpperCase()} +100%`} 
-                          enabled={perks.individualStatBooks[key]} 
-                          onToggle={(val) => setPerks(prev => ({ 
-                            ...prev, 
-                            individualStatBooks: { ...prev.individualStatBooks, [key]: val }
-                          }))} 
-                        />
-                      ))}
-                    </div>
+                  <ToggleSwitch 
+                    label="All Stats +25%" 
+                    enabled={perks.allStatsBook} 
+                    onToggle={(val) => setPerks(prev => ({ ...prev, allStatsBook: val }))} 
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                      <ToggleSwitch 
+                        key={key}
+                        label={`${key.toUpperCase()} +100%`} 
+                        enabled={perks.individualStatBooks[key]} 
+                        onToggle={(val) => setPerks(prev => ({ 
+                          ...prev, 
+                          individualStatBooks: { ...prev.individualStatBooks, [key]: val }
+                        }))} 
+                      />
+                    ))}
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h4 className="font-medium text-gray-900 dark:text-gray-100">Gym Gains Books</h4>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                        <ToggleSwitch 
-                          key={key}
-                          label={`${key.toUpperCase()} Gym +30%`} 
-                          enabled={perks.specificGymBooks[key]} 
-                          onToggle={(val) => setPerks(prev => ({ 
-                            ...prev, 
-                            specificGymBooks: { ...prev.specificGymBooks, [key]: val }
-                          }))} 
-                        />
-                      ))}
-                    </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                      <ToggleSwitch 
+                        key={key}
+                        label={`${key.toUpperCase()} Gym +30%`} 
+                        enabled={perks.specificGymBooks[key]} 
+                        onToggle={(val) => setPerks(prev => ({ 
+                          ...prev, 
+                          specificGymBooks: { ...prev.specificGymBooks, [key]: val }
+                        }))} 
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -405,61 +407,69 @@ export default function App() {
                 ⚔️ Faction Bonuses
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {/* Passive Stat Bonuses */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Bonuses</h4>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Passive Stat Bonuses</h4>
                   
-                  <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border-2 border-orange-200 dark:border-orange-800">
-                    <label className="block text-sm font-bold text-orange-700 dark:text-orange-300 mb-2">
-                      Aggression Branch (STR/SPD): {perks.aggression}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      value={perks.aggression}
-                      onChange={(e) => setPerks(prev => ({ ...prev, aggression: parseInt(e.target.value) }))}
-                      className="w-full h-4 bg-orange-200 rounded-lg appearance-none cursor-pointer dark:bg-orange-700"
-                    />
-                    <div className="flex justify-between text-xs font-medium text-orange-600 dark:text-orange-400 mt-1">
-                      <span>0%</span>
-                      <span>20%</span>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border-2 border-orange-200 dark:border-orange-800">
+                      <label className="block text-lg font-bold text-orange-700 dark:text-orange-300 mb-4">
+                        Aggression Branch (STR/SPD): {perks.aggression}%
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="20"
+                        value={perks.aggression}
+                        onChange={(e) => setPerks(prev => ({ ...prev, aggression: parseInt(e.target.value) }))}
+                        className="w-full h-6 bg-orange-200 rounded-lg appearance-none cursor-pointer dark:bg-orange-700"
+                        style={{
+                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${perks.aggression * 5}%, #fed7aa ${perks.aggression * 5}%, #fed7aa 100%)`
+                        }}
+                      />
+                      <div className="flex justify-between text-sm font-medium text-orange-600 dark:text-orange-400 mt-3">
+                        <span>0%</span>
+                        <span>20%</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-4 border-2 border-cyan-200 dark:border-cyan-800">
-                    <label className="block text-sm font-bold text-cyan-700 dark:text-cyan-300 mb-2">
-                      Suppression Branch (DEF/DEX): {perks.suppression}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      value={perks.suppression}
-                      onChange={(e) => setPerks(prev => ({ ...prev, suppression: parseInt(e.target.value) }))}
-                      className="w-full h-4 bg-cyan-200 rounded-lg appearance-none cursor-pointer dark:bg-cyan-700"
-                    />
-                    <div className="flex justify-between text-xs font-medium text-cyan-600 dark:text-cyan-400 mt-1">
-                      <span>0%</span>
-                      <span>20%</span>
+                    <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border-2 border-cyan-200 dark:border-cyan-800">
+                      <label className="block text-lg font-bold text-cyan-700 dark:text-cyan-300 mb-4">
+                        Suppression Branch (DEF/DEX): {perks.suppression}%
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="20"
+                        value={perks.suppression}
+                        onChange={(e) => setPerks(prev => ({ ...prev, suppression: parseInt(e.target.value) }))}
+                        className="w-full h-6 bg-cyan-200 rounded-lg appearance-none cursor-pointer dark:bg-cyan-700"
+                        style={{
+                          background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${perks.suppression * 5}%, #a5f3fc ${perks.suppression * 5}%, #a5f3fc 100%)`
+                        }}
+                      />
+                      <div className="flex justify-between text-sm font-medium text-cyan-600 dark:text-cyan-400 mt-3">
+                        <span>0%</span>
+                        <span>20%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Gym Gains Bonuses */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Steadfast Gym Gains</h4>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Steadfast Gym Gains</h4>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
                       <div key={key} className={`${
                         key === 'str' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
                         key === 'def' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
                         key === 'spd' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' :
                         'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
-                      } rounded-lg p-3 border-2`}>
-                        <label className={`block text-xs font-bold mb-2 ${
+                      } rounded-xl p-4 border-2`}>
+                        <label className={`block text-sm font-bold mb-3 ${
                           key === 'str' ? 'text-red-700 dark:text-red-300' :
                           key === 'def' ? 'text-green-700 dark:text-green-300' :
                           key === 'spd' ? 'text-blue-700 dark:text-blue-300' :
@@ -476,8 +486,18 @@ export default function App() {
                             ...prev, 
                             steadfast: { ...prev.steadfast, [key]: parseInt(e.target.value) }
                           }))}
-                          className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                          className="w-full h-4 rounded-lg appearance-none cursor-pointer"
+                          style={{
+                            background: key === 'str' ? `linear-gradient(to right, #ef4444 0%, #ef4444 ${perks.steadfast[key] * 5}%, #fca5a5 ${perks.steadfast[key] * 5}%, #fca5a5 100%)` :
+                                      key === 'def' ? `linear-gradient(to right, #22c55e 0%, #22c55e ${perks.steadfast[key] * 5}%, #86efac ${perks.steadfast[key] * 5}%, #86efac 100%)` :
+                                      key === 'spd' ? `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${perks.steadfast[key] * 5}%, #93c5fd ${perks.steadfast[key] * 5}%, #93c5fd 100%)` :
+                                      `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${perks.steadfast[key] * 5}%, #c4b5fd ${perks.steadfast[key] * 5}%, #c4b5fd 100%)`
+                          }}
                         />
+                        <div className="flex justify-between text-xs font-medium mt-2 opacity-75">
+                          <span>0%</span>
+                          <span>20%</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -502,6 +522,16 @@ export default function App() {
                         min="0"
                         max="1000"
                         value={perks.heavyLifting}
+                        onFocus={(e) => {
+                          if (e.target.value === '0') {
+                            e.target.value = '';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === '') {
+                            e.target.value = '0';
+                          }
+                        }}
                         onChange={(e) => setPerks(prev => ({ ...prev, heavyLifting: parseInt(e.target.value) || 0 }))}
                         className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Job points"
@@ -514,6 +544,16 @@ export default function App() {
                         min="0"
                         max="1000"
                         value={perks.rockSalt}
+                        onFocus={(e) => {
+                          if (e.target.value === '0') {
+                            e.target.value = '';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === '') {
+                            e.target.value = '0';
+                          }
+                        }}
                         onChange={(e) => setPerks(prev => ({ ...prev, rockSalt: parseInt(e.target.value) || 0 }))}
                         className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Job points"
@@ -526,6 +566,16 @@ export default function App() {
                         min="0"
                         max="1000"
                         value={perks.roidRage}
+                        onFocus={(e) => {
+                          if (e.target.value === '0') {
+                            e.target.value = '';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === '') {
+                            e.target.value = '0';
+                          }
+                        }}
                         onChange={(e) => setPerks(prev => ({ ...prev, roidRage: parseInt(e.target.value) || 0 }))}
                         className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Job points"
@@ -559,6 +609,16 @@ export default function App() {
                             min="0"
                             max="100"
                             value={perks.merits[key]}
+                            onFocus={(e) => {
+                              if (e.target.value === '0') {
+                                e.target.value = '';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value === '') {
+                                e.target.value = '0';
+                              }
+                            }}
                             onChange={(e) => setPerks(prev => ({ 
                               ...prev, 
                               merits: { ...prev.merits, [key]: parseInt(e.target.value) || 0 }
@@ -581,13 +641,11 @@ export default function App() {
                 <span className="text-2xl">⚙️</span>
                 Advanced Settings
               </h3>
-              <div className="flex flex-col sm:flex-row gap-6 items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
-                  <ToggleSwitch label="Dynamic Happy Loss" enabled={dynamicHappy} onToggle={setDynamicHappy} />
-                </div>
-                <div className="flex items-center">
-                  <label className="mr-3 text-sm font-medium text-gray-700 dark:text-gray-200">Reset All Settings</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
+                <ToggleSwitch label="Dynamic Happy Loss" enabled={dynamicHappy} onToggle={setDynamicHappy} />
+                <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600 transition-colors">
+                  <label className="text-sm font-medium text-red-700 dark:text-red-200 flex-1 pr-3">Reset All Settings</label>
                   <button
                     onClick={() => {
                       if (confirm('Are you sure you want to reset all settings to defaults?')) {
@@ -627,7 +685,7 @@ export default function App() {
                         setAllocationResults(null);
                       }
                     }}
-                    className="inline-flex items-center justify-center px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-800 min-w-[44px] h-6"
+                    className="inline-flex items-center justify-center px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-800"
                   >
                     <span className="text-xs mr-1">🗑️</span>
                     Reset
@@ -649,7 +707,7 @@ export default function App() {
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🔥</span>
-                  Compute Maximum Gains (Cutting-Edge Formula)
+                  Compute Maximum Gains
                   <span className="text-2xl">🔥</span>
                 </span>
               </button>
