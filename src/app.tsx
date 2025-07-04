@@ -583,10 +583,10 @@ export default function App() {
           {/* Footer Credit */}
           <div className="mt-8 text-center space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              2025 - dv1sual
+              2025 - dv1sual[3616352]
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              This page wouldn't be possible without <span className="text-blue-500 dark:text-blue-400">Vladar</span> and his{' '}
+              This page wouldn't be possible without <span className="text-blue-500 dark:text-blue-400">Vladar[1996140]</span> and his{' '}
               <a 
                 href="https://www.torn.com/forums.php#/p=threads&f=61&t=16182535&b=0&a=0" 
                 target="_blank" 
@@ -594,8 +594,8 @@ export default function App() {
                 className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline"
               >
                 Training Gains Explained 2.0
-              </a>, 
-              <span className="text-purple-500 dark:text-purple-400"> Same_Sura</span> for lots of testing. 
+              </a> -  
+              <span className="text-purple-500 dark:text-purple-400"> Same_Sura[2157732]</span> for a ton of testing. 
               Made with the help of <span className="text-emerald-500 dark:text-emerald-400">AI</span>.
             </p>
           </div>

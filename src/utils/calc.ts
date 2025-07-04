@@ -135,18 +135,28 @@ export function computeGain(
   const G = validGains[stat];
   const { A,B,C } = STAT_CONSTANTS[stat];
 
-  const S = Math.min(
-    calculateEffectiveStats({ str: baseStat, def: baseStat, spd: baseStat, dex: baseStat }, perks)[stat],
-    50_000_000
-  );
-  const happyMult = 1 + 0.07 * Math.log(1 + happy / 250);
-  const core      = S * happyMult + 8 * happy ** 1.05 + (1 - (happy / 99_999) ** 2) * A + B;
-  const baseGain  = (core * G * energyUsed) / 200_000;
-  const avgRandom = (C/2) * G * energyUsed / 200_000;
-  const gymMult   = calculateGymGainsMultiplier(stat, perks);
-  const jobPts    = calculateJobPointGains(stat, perks, energyUsed);
+  // Apply effective stats calculation first
+  const effectiveBaseStat = calculateEffectiveStats({ str: baseStat, def: baseStat, spd: baseStat, dex: baseStat }, perks)[stat];
+  
+  // Stat cap handling - matches spreadsheet formula: IF(H3<50000000,H3,(H3-50000000)/(8.77635*LOG(H3))+50000000)
+  const S = effectiveBaseStat < 50_000_000 
+    ? effectiveBaseStat 
+    : (effectiveBaseStat - 50_000_000) / (8.77635 * Math.log(effectiveBaseStat)) + 50_000_000;
+  
+  // Happy multiplier with rounding - matches spreadsheet: ROUND(1+0.07*ROUND(LN(1+G3/250),4),4)
+  const lnComponent = Math.round((Math.log(1 + happy / 250)) * 10000) / 10000; // Round to 4 decimal places
+  const happyMult = Math.round((1 + 0.07 * lnComponent) * 10000) / 10000; // Round to 4 decimal places
+  
+  // Core calculation matching spreadsheet formula
+  const core = S * happyMult + 8 * Math.pow(happy, 1.05) + (1 - Math.pow(happy / 99_999, 2)) * A + B;
+  const baseGain = (core * G * energyUsed) / 200_000;
+  
+  // The spreadsheet uses the full C value, not C/2 for average
+  const randomComponent = C * G * energyUsed / 200_000;
+  const gymMult = calculateGymGainsMultiplier(stat, perks);
+  const jobPts = calculateJobPointGains(stat, perks, energyUsed);
 
-  return (baseGain + avgRandom) * gymMult + jobPts;
+  return (baseGain + randomComponent) * gymMult + jobPts;
 }
 
 // ----------------------------------------------------------------
@@ -251,11 +261,18 @@ export function calculateMultipleTrains(
   
   let total = 0;
   let H = initialHappy;
+  let currentStat = baseStat; // Track stat increases during training
   const perTrain: number[] = [];
+  
   for (let i = 0; i < trains; i++) {
-    const g = computeGain(baseStat, H, gymName, stat, perks);
+    const g = computeGain(currentStat, H, gymName, stat, perks);
     perTrain.push(g);
     total += g;
+    
+    // Update stat for next iteration (stat increases affect subsequent gains)
+    currentStat += g;
+    
+    // Update happy for next iteration
     H = Math.max(0, H - calculateHappyLoss(energyPerTrain));
   }
   return { totalGain: total, finalHappy: H, gainsPerTrain: perTrain };

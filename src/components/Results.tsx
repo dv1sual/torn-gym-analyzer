@@ -143,7 +143,11 @@ const Results: React.FC<Props> = ({ results, selected, allocationResults }) => {
                 
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold">{rankEmoji}</span>
+                    <span className={`text-lg font-bold ${
+                      isSelected ? 'text-green-800 dark:text-green-200' : 
+                      isTopThree ? 'text-blue-800 dark:text-blue-200' : 
+                      'text-gray-900 dark:text-gray-100'
+                    }`}>{rankEmoji}</span>
                     <span className={`font-semibold ${
                       isSelected ? 'text-green-800 dark:text-green-200' : 
                       isTopThree ? 'text-blue-800 dark:text-blue-200' : 
