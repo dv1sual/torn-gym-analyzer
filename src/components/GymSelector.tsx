@@ -1,34 +1,60 @@
 import React from 'react';
 import { Gym } from '../data/gyms';
 
-interface Props {
+interface GymSelectorProps {
   gyms: Gym[];
   selected: string;
-  onChange: (gymName: string) => void;
+  onChange: (gym: string) => void;
 }
 
-const GymSelector: React.FC<Props> = ({ gyms, selected, onChange }) => (
-  <div className="relative">
-    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 uppercase tracking-wide">
-      Current Gym
-    </label>
-    <div className="relative">
-      <select
-        value={selected}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 text-lg font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100 hover:border-gray-300 dark:hover:border-gray-500 appearance-none cursor-pointer pr-12"
-      >
-        {gyms.map((g) => (
-          <option key={g.name} value={g.name}>{g.name}</option>
-        ))}
-      </select>
-      <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-        <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-    </div>
-  </div>
-);
+export default function GymSelector({ gyms, selected, onChange }: GymSelectorProps) {
+  // Group gyms by energy cost
+  const lowEnergyGyms = gyms.filter(g => g.energy === 5);
+  const mediumEnergyGyms = gyms.filter(g => g.energy === 10);
+  const specialGyms25E = gyms.filter(g => g.energy === 25);
+  const specialGyms50E = gyms.filter(g => g.energy === 50);
 
-export default GymSelector;
+  return (
+    <select
+      value={selected}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-4 py-3 text-base font-medium bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-gray-100"
+    >
+      {/* Low Energy Gyms */}
+      <optgroup label="[L] Low Energy (5E)" className="font-bold">
+        {lowEnergyGyms.map((gym) => (
+          <option key={gym.name} value={gym.name} className="py-1">
+            {gym.name}
+          </option>
+        ))}
+      </optgroup>
+
+      {/* Medium Energy Gyms */}
+      <optgroup label="[M] Medium Energy (10E)" className="font-bold">
+        {mediumEnergyGyms.map((gym) => (
+          <option key={gym.name} value={gym.name} className="py-1">
+            {gym.name}
+          </option>
+        ))}
+      </optgroup>
+
+      {/* Special 25E Gyms */}
+      <optgroup label="[S] Special (25E)" className="font-bold">
+        {specialGyms25E.map((gym) => (
+          <option key={gym.name} value={gym.name} className="py-1">
+            {gym.name}
+          </option>
+        ))}
+      </optgroup>
+
+      {/* Special 50E Gyms */}
+      <optgroup label="[S] Special (50E)" className="font-bold">
+        {specialGyms50E.map((gym) => (
+          <option key={gym.name} value={gym.name} className="py-1">
+            {gym.name}
+          </option>
+        ))}
+      </optgroup>
+    </select>
+  );
+}
