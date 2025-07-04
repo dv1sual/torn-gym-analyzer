@@ -97,18 +97,11 @@ export default function App() {
     nutritionalScience: false,
     analysisPerformance: false,
     individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
-    allStatsBook: false,
-    individualStatBooks: { str: false, def: false, spd: false, dex: false },
+    monthlyBookBonus: tornStatsBonus,
     generalGymBook: false,
-    specificGymBooks: { str: false, def: false, spd: false, dex: false },
-    aggression: 0,
-    suppression: 0,
-    steadfast: { str: 0, def: 0, spd: 0, dex: 0 },
     heavyLifting: 0,
     rockSalt: 0,
-    roidRage: 0,
-    sportsShoes: false,
-    merits: tornStatsBonus
+    roidRage: 0
   });
 
   const calculateEnergyAllocation = (gym: any, allocation: any) => {
@@ -137,7 +130,7 @@ export default function App() {
           const result = calculateMultipleTrains(
             stats[key],
             happy,
-            gym.dots[key],
+            gym.name,
             gym.energy,
             trainsPerStat[key],
             key,
@@ -146,7 +139,7 @@ export default function App() {
           gainsPerStat[key] = result.totalGain;
         } else {
           // Static happy calculation
-          const gain = computeGain(stats[key], happy, gym.dots[key], gym.energy, key, perks);
+          const gain = computeGain(stats[key], happy, gym.name, gym.energy, key, perks);
           gainsPerStat[key] = gain * trainsPerStat[key];
         }
       }
@@ -174,7 +167,7 @@ export default function App() {
             const result = calculateMultipleTrains(
               stats[key],
               happy,
-              gym.dots[key],
+              gym.name,
               gym.energy,
               trains,
               key,
@@ -183,7 +176,7 @@ export default function App() {
             perStat[key] = result.totalGain;
           } else {
             // Static happy calculation
-            const gain = computeGain(stats[key], happy, gym.dots[key], gym.energy, key, perks);
+            const gain = computeGain(stats[key], happy, gym.name, gym.energy, key, perks);
             perStat[key] = gain * trains;
           }
         }
