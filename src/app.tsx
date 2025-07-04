@@ -246,18 +246,55 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 transition-all duration-500">
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-              💪 Gym Stats Calculator
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Optimized training calculator
-            </p>
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-600 p-6 mb-8">
+            <div className="text-center">
+              <div className="relative">
+                {/* Background decoration */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-64 h-24 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl"></div>
+                </div>
+                
+                {/* Main title */}
+                <div className="relative">
+                  <div className="flex items-center justify-between">
+                    {/* Left side - Title */}
+                    <div className="text-left">
+                      <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-1 tracking-tight">
+                        TORN
+                      </h1>
+                      <div className="text-lg md:text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-200 dark:to-gray-400 bg-clip-text text-transparent tracking-wide">
+                        Gym Stats Calculator
+                      </div>
+                    </div>
+                    
+                    {/* Right side - Subtitle and badges */}
+                    <div className="text-right space-y-3">
+                      <p className="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-300">
+                        Advanced Training Prediction
+                      </p>
+                      <div className="flex items-center justify-end gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full font-medium">
+                          Vladar Formula
+                        </span>
+                        <span className="text-gray-400">•</span>
+                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full font-medium">
+                          99% Accurate
+                        </span>
+                        <span className="text-gray-400">•</span>
+                        <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-full font-medium">
+                          Real-time
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-
           {/* Main Form */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-600 p-8 mb-8">
             <div className="space-y-8">
