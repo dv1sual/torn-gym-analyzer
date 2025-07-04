@@ -461,7 +461,15 @@ export default function App() {
               2025 - dv1sual
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              This page wouldn't be possible without <span className="text-blue-500 dark:text-blue-400">Vladar</span> and his stats estimator, 
+              This page wouldn't be possible without <span className="text-blue-500 dark:text-blue-400">Vladar</span> and his{' '}
+              <a 
+                href="https://www.torn.com/forums.php#/p=threads&f=61&t=16182535&b=0&a=0" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline"
+              >
+                Training Gains Explained 2.0
+              </a>, 
               <span className="text-purple-500 dark:text-purple-400"> Same_Sura</span> for lots of testing. 
               Made with the help of <span className="text-emerald-500 dark:text-emerald-400">AI</span>.
             </p>
