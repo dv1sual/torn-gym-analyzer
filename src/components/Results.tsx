@@ -79,22 +79,6 @@ const Results: React.FC<Props> = ({ results, selected, allocationResults }) => {
         </div>
       )}
 
-      {/* Current Gym Results */}
-      {selectedRes && (
-        <div className="border-2 border-blue-500 rounded-lg p-4 bg-white dark:bg-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Current Gym (All Energy): {selectedRes.name}
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300">Total Gain: {selectedRes.total.toFixed(2)}</p>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {(Object.entries(selectedRes.perStat) as [string, number][]).map(([k, v]) => (
-              <div key={k} className="text-sm text-gray-600 dark:text-gray-400">
-                {k.toUpperCase()}: {v.toFixed(2)}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Top Gyms Comparison */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-600 p-6">
