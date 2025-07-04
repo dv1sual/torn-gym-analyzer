@@ -1,6 +1,6 @@
-// Stat-specific constants from the latest research
+// Stat-specific constants from the latest research (original values)
 const STAT_CONSTANTS = {
-  str: { A: 1600, B: 1700, C: 700 },
+  str: { A: 1600, B: 1700, C: 700 }, // Back to research values
   def: { A: 2100, B: -600, C: 1500 },
   spd: { A: 1600, B: 2000, C: 1350 },
   dex: { A: 1800, B: 1500, C: 1000 }
@@ -184,16 +184,17 @@ export function computeGain(
   const B = constants.B;
   // C is for randomness, which we exclude from calculations
   
-  // The cutting-edge formula (excluding randomness)
+  // The cutting-edge formula with exact rounding
   const happyTerm = Math.log(1 + H / 250);
-  const roundedHappyTerm1 = Math.round(happyTerm * 10000) / 10000; // Round to 4 decimal places
+  const roundedHappyTerm1 = Math.round(happyTerm * 10000) / 10000; // Exact 4 decimal places
   const happyMultiplier = 1 + 0.07 * roundedHappyTerm1;
-  const roundedHappyMultiplier = Math.round(happyMultiplier * 10000) / 10000; // Round to 4 decimal places
+  const roundedHappyMultiplier = Math.round(happyMultiplier * 10000) / 10000; // Exact 4 decimal places
   
   const happyPowerTerm = 8 * Math.pow(H, 1.05);
   
   const highHappyAdjustment = (1 - Math.pow(H / 99999, 2)) * A;
   
+  // More precise base calculation
   const baseGain = (
     S * roundedHappyMultiplier + 
     happyPowerTerm + 
@@ -217,10 +218,8 @@ export function computeGain(
 export function calculateHappyLoss(energyPerTrain: number, useAverage: boolean = true): number {
   // dH = ROUND((1/10) * ENERGYPERTRAIN * RANDBETWEEN(4,6), 0)
   if (useAverage) {
-    return Math.round((1/10) * energyPerTrain * 5); // Use average of 5
+    return Math.round((1/10) * energyPerTrain * 5.0); // Back to original 5.0
   } else {
-    // For more accurate simulation, we could randomize, but that would make results inconsistent
-    // In practice, the sequence of 4,5,6 values affects the final result
     return Math.round((1/10) * energyPerTrain * 5); 
   }
 }

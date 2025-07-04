@@ -34,33 +34,12 @@ export default function App() {
     dex: 25
   }));
 
-  // Comprehensive perks state
-  const [perks, setPerks] = useState<TrainingPerks>(() => getInitialState('gymCalc_perks', {
-    // Education bonuses
-    sportsScience: false,
-    nutritionalScience: false,
-    analysisPerformance: false,
-    individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
-    
-    // Book bonuses
-    allStatsBook: false,
-    individualStatBooks: { str: false, def: false, spd: false, dex: false },
-    generalGymBook: false,
-    specificGymBooks: { str: false, def: false, spd: false, dex: false },
-    
-    // Faction bonuses
-    aggression: 0,
-    suppression: 0,
-    steadfast: { str: 0, def: 0, spd: 0, dex: 0 },
-    
-    // Company & Job bonuses
-    heavyLifting: 0,
-    rockSalt: 0,
-    roidRage: 0,
-    sportsShoes: false,
-    
-    // Merit bonuses (converted from old system)
-    merits: { str: 0, def: 0, spd: 0, dex: 0 }
+  // Simplified perks state - only merits for TornStats
+  const [tornStatsBonus, setTornStatsBonus] = useState(() => getInitialState('gymCalc_tornStatsBonus', {
+    str: 0,
+    def: 0,
+    spd: 0,
+    dex: 0
   }));
 
   const [allocationResults, setAllocationResults] = useState<any>(null);
@@ -102,8 +81,28 @@ export default function App() {
   }, [energyAllocation]);
 
   useEffect(() => {
-    localStorage.setItem('gymCalc_perks', JSON.stringify(perks));
-  }, [perks]);
+    localStorage.setItem('gymCalc_tornStatsBonus', JSON.stringify(tornStatsBonus));
+  }, [tornStatsBonus]);
+
+  // Convert tornStatsBonus to the perks format for calculations
+  const createPerksObject = (): TrainingPerks => ({
+    sportsScience: false,
+    nutritionalScience: false,
+    analysisPerformance: false,
+    individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
+    allStatsBook: false,
+    individualStatBooks: { str: false, def: false, spd: false, dex: false },
+    generalGymBook: false,
+    specificGymBooks: { str: false, def: false, spd: false, dex: false },
+    aggression: 0,
+    suppression: 0,
+    steadfast: { str: 0, def: 0, spd: 0, dex: 0 },
+    heavyLifting: 0,
+    rockSalt: 0,
+    roidRage: 0,
+    sportsShoes: false,
+    merits: tornStatsBonus
+  });
 
   const calculateEnergyAllocation = (gym: any, allocation: any) => {
     const totalAllocation = allocation.str + allocation.def + allocation.spd + allocation.dex;
@@ -122,6 +121,7 @@ export default function App() {
     };
 
     const gainsPerStat = { str: 0, def: 0, spd: 0, dex: 0 };
+    const perks = createPerksObject();
 
     (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
       if (trainsPerStat[key] > 0) {
@@ -154,6 +154,8 @@ export default function App() {
   };
 
   const runSimulation = () => {
+    const perks = createPerksObject();
+    
     const sessionResults = gyms.map((gym) => {
       const trains = Math.floor(energy / gym.energy);
       const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
@@ -204,7 +206,7 @@ export default function App() {
               💪 Gym Stats Calculator
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Advanced training calculator with cutting-edge formula and comprehensive perks system
+              Optimized training calculator
             </p>
           </div>
 
@@ -307,6 +309,77 @@ export default function App() {
                 </div>
               </div>
 
+              {/* TornStats Bonus Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">📈</span>
+                  TornStats Gym Bonus
+                </h3>
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>How to find your bonus:</strong> In your Torn gym, look at the percentage shown next to your Steadfast values for each stat. This includes all your perks, books, faction bonuses, etc.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                      <div key={key} className="relative">
+                        <label className={`block text-sm font-semibold mb-2 uppercase tracking-wide ${
+                          key === 'str' ? 'text-red-600 dark:text-red-400' :
+                          key === 'def' ? 'text-green-600 dark:text-green-400' :
+                          key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
+                          'text-purple-600 dark:text-purple-400'
+                        }`}>
+                          {key.toUpperCase()} Bonus
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="200"
+                            step="0.1"
+                            value={tornStatsBonus[key] || ''}
+                            onFocus={(e) => {
+                              if (e.target.value === '0') {
+                                e.target.value = '';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value === '') {
+                                setTornStatsBonus(prev => ({ 
+                                  ...prev, 
+                                  [key]: 0 
+                                }));
+                              }
+                            }}
+                            onChange={(e) => setTornStatsBonus(prev => ({ 
+                              ...prev, 
+                              [key]: parseFloat(e.target.value) || 0 
+                            }))}
+                            className={`w-full px-3 py-2.5 pr-8 text-base font-medium bg-white dark:bg-gray-800 border-2 ${
+                              key === 'str' ? 'border-red-200 dark:border-red-800 focus:border-red-500' :
+                              key === 'def' ? 'border-green-200 dark:border-green-800 focus:border-green-500' :
+                              key === 'spd' ? 'border-blue-200 dark:border-blue-800 focus:border-blue-500' :
+                              'border-purple-200 dark:border-purple-800 focus:border-purple-500'
+                            } rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100`}
+                            placeholder="0"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <span className={`text-sm font-bold ${
+                              key === 'str' ? 'text-red-600 dark:text-red-400' :
+                              key === 'def' ? 'text-green-600 dark:text-green-400' :
+                              key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
+                              'text-purple-600 dark:text-purple-400'
+                            }`}>%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               {/* Gym Selection */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -317,342 +390,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* Education Bonuses */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <span className="text-2xl">📚</span>
-                Education Bonuses
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Bonuses</h4>
-                  <ToggleSwitch 
-                    label="Sports Science Bachelor (+2% all stats)" 
-                    enabled={perks.sportsScience} 
-                    onToggle={(val) => setPerks(prev => ({ ...prev, sportsScience: val }))} 
-                  />
-                  <ToggleSwitch 
-                    label="Nutritional Science (+2% STR/SPD)" 
-                    enabled={perks.nutritionalScience} 
-                    onToggle={(val) => setPerks(prev => ({ ...prev, nutritionalScience: val }))} 
-                  />
-                  <ToggleSwitch 
-                    label="Analysis & Performance (+2% DEF/DEX)" 
-                    enabled={perks.analysisPerformance} 
-                    onToggle={(val) => setPerks(prev => ({ ...prev, analysisPerformance: val }))} 
-                  />
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Gym Gains Bonuses</h4>
-                  <ToggleSwitch 
-                    label="General Gym Book (+20% all gym gains)" 
-                    enabled={perks.generalGymBook} 
-                    onToggle={(val) => setPerks(prev => ({ ...prev, generalGymBook: val }))} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Book Bonuses */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                📖 Book Bonuses (31-day temporary)
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Passive Stat Books</h4>
-                  <ToggleSwitch 
-                    label="All Stats +25%" 
-                    enabled={perks.allStatsBook} 
-                    onToggle={(val) => setPerks(prev => ({ ...prev, allStatsBook: val }))} 
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                      <ToggleSwitch 
-                        key={key}
-                        label={`${key.toUpperCase()} +100%`} 
-                        enabled={perks.individualStatBooks[key]} 
-                        onToggle={(val) => setPerks(prev => ({ 
-                          ...prev, 
-                          individualStatBooks: { ...prev.individualStatBooks, [key]: val }
-                        }))} 
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Gym Gains Books</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                      <ToggleSwitch 
-                        key={key}
-                        label={`${key.toUpperCase()} Gym +30%`} 
-                        enabled={perks.specificGymBooks[key]} 
-                        onToggle={(val) => setPerks(prev => ({ 
-                          ...prev, 
-                          specificGymBooks: { ...prev.specificGymBooks, [key]: val }
-                        }))} 
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Faction Bonuses */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                ⚔️ Faction Bonuses
-              </h3>
-              
-              <div className="space-y-6">
-                {/* Passive Stat Bonuses */}
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Passive Stat Bonuses</h4>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border-2 border-orange-200 dark:border-orange-800">
-                      <label className="block text-lg font-bold text-orange-700 dark:text-orange-300 mb-4">
-                        Aggression Branch (STR/SPD): {perks.aggression}%
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="20"
-                        value={perks.aggression}
-                        onChange={(e) => setPerks(prev => ({ ...prev, aggression: parseInt(e.target.value) }))}
-                        className="w-full h-6 bg-orange-200 rounded-lg appearance-none cursor-pointer dark:bg-orange-700"
-                        style={{
-                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${perks.aggression * 5}%, #fed7aa ${perks.aggression * 5}%, #fed7aa 100%)`
-                        }}
-                      />
-                      <div className="flex justify-between text-sm font-medium text-orange-600 dark:text-orange-400 mt-3">
-                        <span>0%</span>
-                        <span>20%</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border-2 border-cyan-200 dark:border-cyan-800">
-                      <label className="block text-lg font-bold text-cyan-700 dark:text-cyan-300 mb-4">
-                        Suppression Branch (DEF/DEX): {perks.suppression}%
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="20"
-                        value={perks.suppression}
-                        onChange={(e) => setPerks(prev => ({ ...prev, suppression: parseInt(e.target.value) }))}
-                        className="w-full h-6 bg-cyan-200 rounded-lg appearance-none cursor-pointer dark:bg-cyan-700"
-                        style={{
-                          background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${perks.suppression * 5}%, #a5f3fc ${perks.suppression * 5}%, #a5f3fc 100%)`
-                        }}
-                      />
-                      <div className="flex justify-between text-sm font-medium text-cyan-600 dark:text-cyan-400 mt-3">
-                        <span>0%</span>
-                        <span>20%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gym Gains Bonuses */}
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Steadfast Gym Gains</h4>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                      <div key={key} className={`${
-                        key === 'str' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
-                        key === 'def' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
-                        key === 'spd' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' :
-                        'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
-                      } rounded-xl p-4 border-2`}>
-                        <label className={`block text-sm font-bold mb-3 ${
-                          key === 'str' ? 'text-red-700 dark:text-red-300' :
-                          key === 'def' ? 'text-green-700 dark:text-green-300' :
-                          key === 'spd' ? 'text-blue-700 dark:text-blue-300' :
-                          'text-purple-700 dark:text-purple-300'
-                        }`}>
-                          {key.toUpperCase()}: {perks.steadfast[key].toFixed(1)}%
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="20"
-                          value={perks.steadfast[key]}
-                          onChange={(e) => setPerks(prev => ({ 
-                            ...prev, 
-                            steadfast: { ...prev.steadfast, [key]: parseInt(e.target.value) }
-                          }))}
-                          className="w-full h-4 rounded-lg appearance-none cursor-pointer"
-                          style={{
-                            background: key === 'str' ? `linear-gradient(to right, #ef4444 0%, #ef4444 ${perks.steadfast[key] * 5}%, #fca5a5 ${perks.steadfast[key] * 5}%, #fca5a5 100%)` :
-                                      key === 'def' ? `linear-gradient(to right, #22c55e 0%, #22c55e ${perks.steadfast[key] * 5}%, #86efac ${perks.steadfast[key] * 5}%, #86efac 100%)` :
-                                      key === 'spd' ? `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${perks.steadfast[key] * 5}%, #93c5fd ${perks.steadfast[key] * 5}%, #93c5fd 100%)` :
-                                      `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${perks.steadfast[key] * 5}%, #c4b5fd ${perks.steadfast[key] * 5}%, #c4b5fd 100%)`
-                          }}
-                        />
-                        <div className="flex justify-between text-xs font-medium mt-2 opacity-75">
-                          <span>0%</span>
-                          <span>20%</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Company & Job Bonuses */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                🏢 Company & Job Bonuses
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Job Point Specials</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[100px]">Heavy Lifting (STR)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        value={perks.heavyLifting || ''}
-                        onFocus={(e) => {
-                          if (e.target.value === '0') {
-                            e.target.value = '';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (e.target.value === '') {
-                            setPerks(prev => ({ ...prev, heavyLifting: 0 }));
-                          }
-                        }}
-                        onChange={(e) => setPerks(prev => ({ 
-                            ...prev, 
-                            heavyLifting: parseInt(e.target.value) || 0 
-                        }))}
-                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24 text-gray-900 dark:text-gray-100"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[100px]">Rock Salt (DEF)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        value={perks.rockSalt || ''}
-                        onFocus={(e) => {
-                          if (e.target.value === '0') {
-                            e.target.value = '';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (e.target.value === '') {
-                            setPerks(prev => ({ ...prev, rockSalt: 0 }));
-                          }
-                        }}
-                        onChange={(e) => setPerks(prev => ({ 
-                            ...prev, 
-                            rockSalt: parseInt(e.target.value) || 0 
-                        }))}
-                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24 text-gray-900 dark:text-gray-100"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 min-w-[100px]">Roid Rage (STR)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        value={perks.roidRage || ''}
-                        onFocus={(e) => {
-                          if (e.target.value === '0') {
-                            e.target.value = '';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (e.target.value === '') {
-                            setPerks(prev => ({ ...prev, roidRage: 0 }));
-                          }
-                        }}
-                        onChange={(e) => setPerks(prev => ({ 
-                            ...prev, 
-                            roidRage: parseInt(e.target.value) || 0 
-                        }))}
-                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24 text-gray-900 dark:text-gray-100"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Items & Merit Bonuses</h4>
-                  <div className="space-y-3">
-                    <ToggleSwitch 
-                      label="Sports Shoes (+5% SPD gym gains)" 
-                      enabled={perks.sportsShoes} 
-                      onToggle={(val) => setPerks(prev => ({ ...prev, sportsShoes: val }))} 
-                    />
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                        <div key={key} className="flex items-center gap-2">
-                          <label className={`text-xs font-medium min-w-[40px] ${
-                            key === 'str' ? 'text-red-600 dark:text-red-400' :
-                            key === 'def' ? 'text-green-600 dark:text-green-400' :
-                            key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
-                            'text-purple-600 dark:text-purple-400'
-                          }`}>
-                            {key.toUpperCase()} Merit
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value={perks.merits[key] || ''}
-                            onFocus={(e) => {
-                              if (e.target.value === '0') {
-                                e.target.value = '';
-                              }
-                            }}
-                            onBlur={(e) => {
-                              if (e.target.value === '') {
-                                setPerks(prev => ({ 
-                                  ...prev, 
-                                  merits: { ...prev.merits, [key]: 0 }
-                                }));
-                              }
-                            }}
-                            onChange={(e) => setPerks(prev => ({ 
-                              ...prev, 
-                              merits: { ...prev.merits, [key]: parseFloat(e.target.value) || 0 }
-                            }))}
-                            className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-16 text-gray-900 dark:text-gray-100"
-                            placeholder="0"
-                          />
-                          <span className="text-xs text-gray-500">%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Advanced Settings */}
+            {/* Settings */}
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <span className="text-2xl">⚙️</span>
-                Advanced Settings
+                Settings
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
@@ -676,24 +418,7 @@ export default function App() {
                         setDynamicHappy(false);
                         setDarkMode(false);
                         setEnergyAllocation({ str: 25, def: 25, spd: 25, dex: 25 });
-                        setPerks({
-                          sportsScience: false,
-                          nutritionalScience: false,
-                          analysisPerformance: false,
-                          individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
-                          allStatsBook: false,
-                          individualStatBooks: { str: false, def: false, spd: false, dex: false },
-                          generalGymBook: false,
-                          specificGymBooks: { str: false, def: false, spd: false, dex: false },
-                          aggression: 0,
-                          suppression: 0,
-                          steadfast: { str: 0, def: 0, spd: 0, dex: 0 },
-                          heavyLifting: 0,
-                          rockSalt: 0,
-                          roidRage: 0,
-                          sportsShoes: false,
-                          merits: { str: 0, def: 0, spd: 0, dex: 0 }
-                        });
+                        setTornStatsBonus({ str: 0, def: 0, spd: 0, dex: 0 });
                         setResults([]);
                         setAllocationResults(null);
                       }
@@ -733,7 +458,7 @@ export default function App() {
           {/* Footer Credit */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
-              2025 - Advanced Gym Calculator with Latest Research Formula
+              2025 - dv1sual
             </p>
           </div>
         </div>
