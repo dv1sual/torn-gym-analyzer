@@ -7,13 +7,6 @@ import HappyEnergyInput from './components/HappyEnergyInput';
 import Results from './components/Results';
 import ToggleSwitch from './components/ToggleSwitch';
 
-type StatsObject = {
-  str: number;
-  def: number;
-  spd: number;
-  dex: number;
-};
-
 export default function App() {
   // Helper function to get initial state from localStorage or use defaults
   const getInitialState = (key: string, defaultValue: any) => {
@@ -279,7 +272,7 @@ export default function App() {
                                 e.target.value = '0';
                               }
                             }}
-                            onChange={(e) => setEnergyAllocation((prev: StatsObject) => ({
+                            onChange={(e) => setEnergyAllocation((prev) => ({
                               ...prev,
                               [key]: parseInt(e.target.value) || 0
                             }))}
@@ -354,13 +347,13 @@ export default function App() {
                             }}
                             onBlur={(e) => {
                               if (e.target.value === '') {
-                                setTornStatsBonus((prev: StatsObject) => ({ 
+                                setTornStatsBonus((prev) => ({ 
                                   ...prev, 
                                   [key]: 0 
                                 }));
                               }
                             }}
-                            onChange={(e) => setTornStatsBonus((prev: StatsObject) => ({ 
+                            onChange={(e) => setTornStatsBonus((prev) => ({ 
                               ...prev, 
                               [key]: parseFloat(e.target.value) || 0 
                             }))}
@@ -463,9 +456,14 @@ export default function App() {
           <Results results={results} selected={selectedGym} allocationResults={allocationResults} />
           
           {/* Footer Credit */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
+          <div className="mt-8 text-center space-y-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
               2025 - dv1sual
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              This page wouldn't be possible without <span className="text-blue-500 dark:text-blue-400">Vladar</span> and his stats estimator, 
+              <span className="text-purple-500 dark:text-purple-400"> Same_Sura</span> for lots of testing. 
+              Made with the help of <span className="text-emerald-500 dark:text-emerald-400">AI</span>.
             </p>
           </div>
         </div>
