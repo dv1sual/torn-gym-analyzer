@@ -194,8 +194,18 @@ export default function App() {
       const trains = Math.floor(energy / gymEnergy);
       const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
 
+      // Calculate potential gain for each stat if ALL energy went to that stat
+      let maxSingleStatGain = 0;
+      
       (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
-        if (trains > 0) {
+        // Only calculate gains if the gym actually offers training for this stat
+        const gymData = gyms.find(g => g.name === gym.name);
+        const gymHasStat = gymData && gymData.dots[key] > 0;
+        
+        if (trains > 0 && gymHasStat) {
+          // Calculate what you'd get if ALL energy went to this one stat
+          let singleStatGain = 0;
+          
           if (dynamicHappy) {
             // Use multiple trains calculation with dynamic happy loss
             const result = calculateMultipleTrains(
@@ -206,16 +216,21 @@ export default function App() {
               key,
               perks
             );
-            perStat[key] = result.totalGain;
+            singleStatGain = result.totalGain;
           } else {
             // Static happy calculation
             const gain = computeGain(stats[key], happy, gym.name, key, perks);
-            perStat[key] = gain * trains;
+            singleStatGain = gain * trains;
           }
+          
+          // Store individual stat potential and track maximum
+          perStat[key] = singleStatGain;
+          maxSingleStatGain = Math.max(maxSingleStatGain, singleStatGain);
         }
       });
 
-      const total = perStat.str + perStat.def + perStat.spd + perStat.dex;
+      // Total is the maximum gain possible from focusing on the best single stat
+      const total = maxSingleStatGain;
       return { name: gym.name, perStat, total };
     });
 
