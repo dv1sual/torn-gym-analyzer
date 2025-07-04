@@ -241,7 +241,7 @@ export default function App() {
                 <div className="space-y-4">
                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                     <p className="text-sm text-amber-700 dark:text-amber-300">
-                      <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages. The calculator uses the cutting-edge formula for maximum accuracy.
+                      <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages.
                     </p>
                   </div>
                   
