@@ -22,39 +22,55 @@ export default function GymSelector({ gyms, selected, onChange }: GymSelectorPro
       className="w-full px-4 py-3 text-base font-medium bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-gray-100"
     >
       {/* Low Energy Gyms */}
-      <optgroup label="[L] Low Energy (5E)" className="font-bold">
-        {lowEnergyGyms.map((gym) => (
-          <option key={gym.name} value={gym.name} className="py-1">
-            {gym.name}
-          </option>
-        ))}
+      <optgroup label="🟢 Low Energy (5E)" className="font-bold text-green-700 bg-green-50">
+        {lowEnergyGyms.map((gym) => {
+          const energy = getGymEnergy(gym.name);
+          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
+          return (
+            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-green-50">
+              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
+            </option>
+          );
+        })}
       </optgroup>
 
       {/* Medium Energy Gyms */}
-      <optgroup label="[M] Medium Energy (10E)" className="font-bold">
-        {mediumEnergyGyms.map((gym) => (
-          <option key={gym.name} value={gym.name} className="py-1">
-            {gym.name}
-          </option>
-        ))}
+      <optgroup label="🟡 Medium Energy (10E)" className="font-bold text-yellow-700 bg-yellow-50">
+        {mediumEnergyGyms.map((gym) => {
+          const energy = getGymEnergy(gym.name);
+          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
+          return (
+            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-yellow-50">
+              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
+            </option>
+          );
+        })}
       </optgroup>
 
       {/* Special 25E Gyms */}
-      <optgroup label="[S] Special (25E)" className="font-bold">
-        {specialGyms25E.map((gym) => (
-          <option key={gym.name} value={gym.name} className="py-1">
-            {gym.name}
-          </option>
-        ))}
+      <optgroup label="🟠 Special (25E)" className="font-bold text-orange-700 bg-orange-50">
+        {specialGyms25E.map((gym) => {
+          const energy = getGymEnergy(gym.name);
+          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
+          return (
+            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-orange-50">
+              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
+            </option>
+          );
+        })}
       </optgroup>
 
       {/* Special 50E Gyms */}
-      <optgroup label="[S] Special (50E)" className="font-bold">
-        {specialGyms50E.map((gym) => (
-          <option key={gym.name} value={gym.name} className="py-1">
-            {gym.name}
-          </option>
-        ))}
+      <optgroup label="🔴 Special (50E)" className="font-bold text-red-700 bg-red-50">
+        {specialGyms50E.map((gym) => {
+          const energy = getGymEnergy(gym.name);
+          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
+          return (
+            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-red-50">
+              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
+            </option>
+          );
+        })}
       </optgroup>
     </select>
   );

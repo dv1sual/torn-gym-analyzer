@@ -265,6 +265,15 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Gym Selection */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">🏋️</span>
+                  Gym Selection
+                </h3>
+                <GymSelector gyms={gyms} selected={selectedGym} onChange={setSelectedGym} />
+              </div>
+
               {/* Energy Allocation Section */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -272,12 +281,6 @@ export default function App() {
                   Energy Allocation
                 </h3>
                 <div className="space-y-4">
-                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                      <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages.
-                    </p>
-                  </div>
-                  
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
                       <div key={key} className="relative">
@@ -329,15 +332,23 @@ export default function App() {
                     ))}
                   </div>
                   
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      <strong>Total Allocation:</strong> {energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex}%
-                      {(energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex) !== 100 && (
-                        <span className="text-amber-600 dark:text-amber-400 ml-2">
-                          (Should total 100% for optimal results)
-                        </span>
-                      )}
-                    </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages.
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <strong>Total Allocation:</strong> {energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex}%
+                        {(energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex) !== 100 && (
+                          <span className="text-amber-600 dark:text-amber-400 ml-2">
+                            (Should total 100% for optimal results)
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -481,15 +492,6 @@ export default function App() {
                     <strong>Faction Steadfast:</strong> These bonuses are applied separately from other perks and stack multiplicatively.
                   </p>
                 </div>
-              </div>
-
-              {/* Gym Selection */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">🏋️</span>
-                  Gym Selection
-                </h3>
-                <GymSelector gyms={gyms} selected={selectedGym} onChange={setSelectedGym} />
               </div>
             </div>
 
