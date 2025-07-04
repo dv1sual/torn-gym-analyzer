@@ -7,6 +7,13 @@ import HappyEnergyInput from './components/HappyEnergyInput';
 import Results from './components/Results';
 import ToggleSwitch from './components/ToggleSwitch';
 
+type StatAllocation = {
+  str: number;
+  def: number;
+  spd: number;
+  dex: number;
+};
+
 export default function App() {
   // Helper function to get initial state from localStorage or use defaults
   const getInitialState = (key: string, defaultValue: any) => {
@@ -272,7 +279,7 @@ export default function App() {
                                 e.target.value = '0';
                               }
                             }}
-                            onChange={(e) => setEnergyAllocation((prev) => ({
+                            onChange={(e) => setEnergyAllocation((prev: StatAllocation) => ({
                               ...prev,
                               [key]: parseInt(e.target.value) || 0
                             }))}
@@ -347,13 +354,13 @@ export default function App() {
                             }}
                             onBlur={(e) => {
                               if (e.target.value === '') {
-                                setTornStatsBonus((prev) => ({ 
+                                setTornStatsBonus((prev: StatAllocation) => ({ 
                                   ...prev, 
                                   [key]: 0 
                                 }));
                               }
                             }}
-                            onChange={(e) => setTornStatsBonus((prev) => ({ 
+                            onChange={(e) => setTornStatsBonus((prev: StatAllocation) => ({ 
                               ...prev, 
                               [key]: parseFloat(e.target.value) || 0 
                             }))}
