@@ -204,7 +204,7 @@ export default function App() {
               💪 Gym Stats Calculator
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Advanced training calculator and comprehensive perks system
+              Advanced training calculator with cutting-edge formula and comprehensive perks system
             </p>
           </div>
 
@@ -475,7 +475,7 @@ export default function App() {
                           key === 'spd' ? 'text-blue-700 dark:text-blue-300' :
                           'text-purple-700 dark:text-purple-300'
                         }`}>
-                          {key.toUpperCase()}: {perks.steadfast[key]}%
+                          {key.toUpperCase()}: {perks.steadfast[key].toFixed(1)}%
                         </label>
                         <input
                           type="range"
@@ -521,7 +521,7 @@ export default function App() {
                         type="number"
                         min="0"
                         max="1000"
-                        value={perks.heavyLifting}
+                        value={perks.heavyLifting || ''}
                         onFocus={(e) => {
                           if (e.target.value === '0') {
                             e.target.value = '';
@@ -529,12 +529,15 @@ export default function App() {
                         }}
                         onBlur={(e) => {
                           if (e.target.value === '') {
-                            e.target.value = '0';
+                            setPerks(prev => ({ ...prev, heavyLifting: 0 }));
                           }
                         }}
-                        onChange={(e) => setPerks(prev => ({ ...prev, heavyLifting: parseInt(e.target.value) || 0 }))}
-                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Job points"
+                        onChange={(e) => setPerks(prev => ({ 
+                            ...prev, 
+                            heavyLifting: parseInt(e.target.value) || 0 
+                        }))}
+                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24 text-gray-900 dark:text-gray-100"
+                        placeholder="0"
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -543,7 +546,7 @@ export default function App() {
                         type="number"
                         min="0"
                         max="1000"
-                        value={perks.rockSalt}
+                        value={perks.rockSalt || ''}
                         onFocus={(e) => {
                           if (e.target.value === '0') {
                             e.target.value = '';
@@ -551,12 +554,15 @@ export default function App() {
                         }}
                         onBlur={(e) => {
                           if (e.target.value === '') {
-                            e.target.value = '0';
+                            setPerks(prev => ({ ...prev, rockSalt: 0 }));
                           }
                         }}
-                        onChange={(e) => setPerks(prev => ({ ...prev, rockSalt: parseInt(e.target.value) || 0 }))}
-                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Job points"
+                        onChange={(e) => setPerks(prev => ({ 
+                            ...prev, 
+                            rockSalt: parseInt(e.target.value) || 0 
+                        }))}
+                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24 text-gray-900 dark:text-gray-100"
+                        placeholder="0"
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -565,7 +571,7 @@ export default function App() {
                         type="number"
                         min="0"
                         max="1000"
-                        value={perks.roidRage}
+                        value={perks.roidRage || ''}
                         onFocus={(e) => {
                           if (e.target.value === '0') {
                             e.target.value = '';
@@ -573,12 +579,15 @@ export default function App() {
                         }}
                         onBlur={(e) => {
                           if (e.target.value === '') {
-                            e.target.value = '0';
+                            setPerks(prev => ({ ...prev, roidRage: 0 }));
                           }
                         }}
-                        onChange={(e) => setPerks(prev => ({ ...prev, roidRage: parseInt(e.target.value) || 0 }))}
-                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Job points"
+                        onChange={(e) => setPerks(prev => ({ 
+                            ...prev, 
+                            roidRage: parseInt(e.target.value) || 0 
+                        }))}
+                        className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24 text-gray-900 dark:text-gray-100"
+                        placeholder="0"
                       />
                     </div>
                   </div>
@@ -608,7 +617,8 @@ export default function App() {
                             type="number"
                             min="0"
                             max="100"
-                            value={perks.merits[key]}
+                            step="0.1"
+                            value={perks.merits[key] || ''}
                             onFocus={(e) => {
                               if (e.target.value === '0') {
                                 e.target.value = '';
@@ -616,14 +626,17 @@ export default function App() {
                             }}
                             onBlur={(e) => {
                               if (e.target.value === '') {
-                                e.target.value = '0';
+                                setPerks(prev => ({ 
+                                  ...prev, 
+                                  merits: { ...prev.merits, [key]: 0 }
+                                }));
                               }
                             }}
                             onChange={(e) => setPerks(prev => ({ 
                               ...prev, 
-                              merits: { ...prev.merits, [key]: parseInt(e.target.value) || 0 }
+                              merits: { ...prev.merits, [key]: parseFloat(e.target.value) || 0 }
                             }))}
-                            className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-16"
+                            className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-16 text-gray-900 dark:text-gray-100"
                             placeholder="0"
                           />
                           <span className="text-xs text-gray-500">%</span>
@@ -720,7 +733,7 @@ export default function App() {
           {/* Footer Credit */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
-              2025 - dv1sual
+              2025 - Advanced Gym Calculator with Latest Research Formula
             </p>
           </div>
         </div>

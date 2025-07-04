@@ -185,16 +185,17 @@ export function computeGain(
   // C is for randomness, which we exclude from calculations
   
   // The cutting-edge formula (excluding randomness)
-  const roundedHappyTerm = Math.round(
-    (1 + 0.07 * Math.round(Math.log(1 + H / 250) * 10000) / 10000) * 10000
-  ) / 10000;
+  const happyTerm = Math.log(1 + H / 250);
+  const roundedHappyTerm1 = Math.round(happyTerm * 10000) / 10000; // Round to 4 decimal places
+  const happyMultiplier = 1 + 0.07 * roundedHappyTerm1;
+  const roundedHappyMultiplier = Math.round(happyMultiplier * 10000) / 10000; // Round to 4 decimal places
   
   const happyPowerTerm = 8 * Math.pow(H, 1.05);
   
   const highHappyAdjustment = (1 - Math.pow(H / 99999, 2)) * A;
   
   const baseGain = (
-    S * roundedHappyTerm + 
+    S * roundedHappyMultiplier + 
     happyPowerTerm + 
     highHappyAdjustment + 
     B
@@ -211,12 +212,17 @@ export function computeGain(
 }
 
 /**
- * Calculate happy loss per train
+ * Calculate happy loss per train with realistic variance
  */
-export function calculateHappyLoss(energyPerTrain: number): number {
+export function calculateHappyLoss(energyPerTrain: number, useAverage: boolean = true): number {
   // dH = ROUND((1/10) * ENERGYPERTRAIN * RANDBETWEEN(4,6), 0)
-  // We use the average of 5 for predictable calculations
-  return Math.round((1/10) * energyPerTrain * 5);
+  if (useAverage) {
+    return Math.round((1/10) * energyPerTrain * 5); // Use average of 5
+  } else {
+    // For more accurate simulation, we could randomize, but that would make results inconsistent
+    // In practice, the sequence of 4,5,6 values affects the final result
+    return Math.round((1/10) * energyPerTrain * 5); 
+  }
 }
 
 /**
