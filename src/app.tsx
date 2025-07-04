@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { gyms } from './data/gyms';
-import { computeGain, calculateMultipleTrains, TrainingPerks } from './utils/calc';
+import { computeGain, calculateMultipleTrains, TrainingPerks, getGymEnergy } from './utils/calc';
 import GymSelector from './components/GymSelector';
 import StatsInput from './components/StatsInput';
 import HappyEnergyInput from './components/HappyEnergyInput';
@@ -41,8 +41,15 @@ export default function App() {
     dex: 25
   }));
 
-  // Simplified perks state - only merits for TornStats
-  const [tornStatsBonus, setTornStatsBonus] = useState(() => getInitialState('gymCalc_tornStatsBonus', {
+  // Simple bonus inputs
+  const [propertyPerks, setPropertyPerks] = useState(() => getInitialState('gymCalc_propertyPerks', 0));
+  const [educationStatSpecific, setEducationStatSpecific] = useState(() => getInitialState('gymCalc_educationStatSpecific', 0));
+  const [educationGeneral, setEducationGeneral] = useState(() => getInitialState('gymCalc_educationGeneral', 0));
+  const [jobPerks, setJobPerks] = useState(() => getInitialState('gymCalc_jobPerks', 0));
+  const [bookPerks, setBookPerks] = useState(() => getInitialState('gymCalc_bookPerks', 0));
+  
+  // Faction steadfast bonuses (separate from other perks)
+  const [steadfastBonus, setSteadfastBonus] = useState(() => getInitialState('gymCalc_steadfastBonus', {
     str: 0,
     def: 0,
     spd: 0,
@@ -88,21 +95,47 @@ export default function App() {
   }, [energyAllocation]);
 
   useEffect(() => {
-    localStorage.setItem('gymCalc_tornStatsBonus', JSON.stringify(tornStatsBonus));
-  }, [tornStatsBonus]);
+    localStorage.setItem('gymCalc_propertyPerks', JSON.stringify(propertyPerks));
+  }, [propertyPerks]);
 
-  // Convert tornStatsBonus to the perks format for calculations
-  const createPerksObject = (): TrainingPerks => ({
-    sportsScience: false,
-    nutritionalScience: false,
-    analysisPerformance: false,
-    individualCourses: { str: 0, def: 0, spd: 0, dex: 0 },
-    monthlyBookBonus: tornStatsBonus,
-    generalGymBook: false,
-    heavyLifting: 0,
-    rockSalt: 0,
-    roidRage: 0
-  });
+  useEffect(() => {
+    localStorage.setItem('gymCalc_educationStatSpecific', JSON.stringify(educationStatSpecific));
+  }, [educationStatSpecific]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_educationGeneral', JSON.stringify(educationGeneral));
+  }, [educationGeneral]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_jobPerks', JSON.stringify(jobPerks));
+  }, [jobPerks]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_bookPerks', JSON.stringify(bookPerks));
+  }, [bookPerks]);
+
+  useEffect(() => {
+    localStorage.setItem('gymCalc_steadfastBonus', JSON.stringify(steadfastBonus));
+  }, [steadfastBonus]);
+
+  // Convert bonus inputs to the perks format for calculations
+  const createPerksObject = (): TrainingPerks => {
+    // Apply all non-steadfast bonuses as a single manual gym bonus percentage
+    const totalBonus = (Number(propertyPerks) || 0) + (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0) + (Number(jobPerks) || 0) + (Number(bookPerks) || 0);
+    
+    return {
+      // Apply all bonuses as manual gym bonus (this covers all multiplicative bonuses)
+      manualGymBonusPercent: {
+        str: totalBonus,
+        def: totalBonus,
+        spd: totalBonus,
+        dex: totalBonus
+      },
+      
+      // Faction steadfast bonuses (separate multiplicative bonuses)
+      steadfast: steadfastBonus
+    };
+  };
 
   const calculateEnergyAllocation = (gym: any, allocation: any) => {
     const totalAllocation = allocation.str + allocation.def + allocation.spd + allocation.dex;
@@ -113,11 +146,12 @@ export default function App() {
       dex: Math.floor((energy * allocation.dex) / totalAllocation)
     };
 
+    const gymEnergy = getGymEnergy(gym.name);
     const trainsPerStat = {
-      str: Math.floor(energyPerStat.str / gym.energy),
-      def: Math.floor(energyPerStat.def / gym.energy),
-      spd: Math.floor(energyPerStat.spd / gym.energy),
-      dex: Math.floor(energyPerStat.dex / gym.energy)
+      str: Math.floor(energyPerStat.str / gymEnergy),
+      def: Math.floor(energyPerStat.def / gymEnergy),
+      spd: Math.floor(energyPerStat.spd / gymEnergy),
+      dex: Math.floor(energyPerStat.dex / gymEnergy)
     };
 
     const gainsPerStat = { str: 0, def: 0, spd: 0, dex: 0 };
@@ -126,20 +160,19 @@ export default function App() {
     (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
       if (trainsPerStat[key] > 0) {
         if (dynamicHappy) {
-          // Use multiple trains calculation with dynamic happy loss
-          const result = calculateMultipleTrains(
-            stats[key],
-            happy,
-            gym.name,
-            gym.energy,
-            trainsPerStat[key],
-            key,
-            perks
-          );
+            // Use multiple trains calculation with dynamic happy loss
+            const result = calculateMultipleTrains(
+              stats[key],
+              happy,
+              gym.name,
+              trainsPerStat[key],
+              key,
+              perks
+            );
           gainsPerStat[key] = result.totalGain;
         } else {
           // Static happy calculation
-          const gain = computeGain(stats[key], happy, gym.name, gym.energy, key, perks);
+            const gain = computeGain(stats[key], happy, gym.name, key, perks);
           gainsPerStat[key] = gain * trainsPerStat[key];
         }
       }
@@ -157,7 +190,8 @@ export default function App() {
     const perks = createPerksObject();
     
     const sessionResults = gyms.map((gym) => {
-      const trains = Math.floor(energy / gym.energy);
+      const gymEnergy = getGymEnergy(gym.name);
+      const trains = Math.floor(energy / gymEnergy);
       const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
 
       (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
@@ -168,7 +202,6 @@ export default function App() {
               stats[key],
               happy,
               gym.name,
-              gym.energy,
               trains,
               key,
               perks
@@ -176,7 +209,7 @@ export default function App() {
             perStat[key] = result.totalGain;
           } else {
             // Static happy calculation
-            const gain = computeGain(stats[key], happy, gym.name, gym.energy, key, perks);
+            const gain = computeGain(stats[key], happy, gym.name, key, perks);
             perStat[key] = gain * trains;
           }
         }
@@ -309,74 +342,144 @@ export default function App() {
                 </div>
               </div>
 
-              {/* TornStats Bonus Section */}
+              {/* Perks Bonuses Section */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                   <span className="text-2xl">📈</span>
-                  TornStats Gym Bonus
+                  Perks Bonuses
                 </h3>
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      <strong>How to find your bonus:</strong> In your Torn gym, look at the percentage shown next to your Steadfast values for each stat. This includes all your perks, books, faction bonuses, etc.
-                    </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                      Property Perks (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={propertyPerks || ''}
+                      onChange={(e) => setPropertyPerks(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
+                      placeholder="0"
+                    />
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                      <div key={key} className="relative">
-                        <label className={`block text-sm font-semibold mb-2 uppercase tracking-wide ${
-                          key === 'str' ? 'text-red-600 dark:text-red-400' :
-                          key === 'def' ? 'text-green-600 dark:text-green-400' :
-                          key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
-                          'text-purple-600 dark:text-purple-400'
-                        }`}>
-                          {key.toUpperCase()} Bonus
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            min="0"
-                            max="200"
-                            step="0.1"
-                            value={tornStatsBonus[key] || ''}
-                            onFocus={(e) => {
-                              if (e.target.value === '0') {
-                                e.target.value = '';
-                              }
-                            }}
-                            onBlur={(e) => {
-                              if (e.target.value === '') {
-                                setTornStatsBonus((prev: StatAllocation) => ({ 
-                                  ...prev, 
-                                  [key]: 0 
-                                }));
-                              }
-                            }}
-                            onChange={(e) => setTornStatsBonus((prev: StatAllocation) => ({ 
-                              ...prev, 
-                              [key]: parseFloat(e.target.value) || 0 
-                            }))}
-                            className={`w-full px-3 py-2.5 pr-8 text-base font-medium bg-white dark:bg-gray-800 border-2 ${
-                              key === 'str' ? 'border-red-200 dark:border-red-800 focus:border-red-500' :
-                              key === 'def' ? 'border-green-200 dark:border-green-800 focus:border-green-500' :
-                              key === 'spd' ? 'border-blue-200 dark:border-blue-800 focus:border-blue-500' :
-                              'border-purple-200 dark:border-purple-800 focus:border-purple-500'
-                            } rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100`}
-                            placeholder="0"
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <span className={`text-sm font-bold ${
-                              key === 'str' ? 'text-red-600 dark:text-red-400' :
-                              key === 'def' ? 'text-green-600 dark:text-green-400' :
-                              key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
-                              'text-purple-600 dark:text-purple-400'
-                            }`}>%</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                      Education (Stat Specific) (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={educationStatSpecific || ''}
+                      onChange={(e) => setEducationStatSpecific(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
+                      placeholder="0"
+                    />
                   </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                      Education (General) (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={educationGeneral || ''}
+                      onChange={(e) => setEducationGeneral(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                      Job Perks (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={jobPerks || ''}
+                      onChange={(e) => setJobPerks(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                      Book Perks (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={bookPerks || ''}
+                      onChange={(e) => setBookPerks(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Total Bonus:</strong> {(Number(propertyPerks) || 0) + (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0) + (Number(jobPerks) || 0) + (Number(bookPerks) || 0)}% applied to all stats
+                  </p>
+                </div>
+              </div>
+
+              {/* Faction Steadfast Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">🏛️</span>
+                  Faction Steadfast
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
+                    <div key={key} className="relative">
+                      <label className={`block text-sm font-semibold mb-2 uppercase tracking-wide ${
+                        key === 'str' ? 'text-red-600 dark:text-red-400' :
+                        key === 'def' ? 'text-green-600 dark:text-green-400' :
+                        key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
+                        'text-purple-600 dark:text-purple-400'
+                      }`}>
+                        {key.toUpperCase()} Steadfast (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={steadfastBonus[key] || ''}
+                        onChange={(e) => setSteadfastBonus((prev: StatAllocation) => ({ 
+                          ...prev, 
+                          [key]: parseFloat(e.target.value) || 0 
+                        }))}
+                        className={`w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 ${
+                          key === 'str' ? 'border-red-200 dark:border-red-800 focus:border-red-500' :
+                          key === 'def' ? 'border-green-200 dark:border-green-800 focus:border-green-500' :
+                          key === 'spd' ? 'border-blue-200 dark:border-blue-800 focus:border-blue-500' :
+                          'border-purple-200 dark:border-purple-800 focus:border-purple-500'
+                        } rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100`}
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    <strong>Faction Steadfast:</strong> These bonuses are applied separately from other perks and stack multiplicatively.
+                  </p>
                 </div>
               </div>
 
@@ -418,7 +521,12 @@ export default function App() {
                         setDynamicHappy(false);
                         setDarkMode(false);
                         setEnergyAllocation({ str: 25, def: 25, spd: 25, dex: 25 });
-                        setTornStatsBonus({ str: 0, def: 0, spd: 0, dex: 0 });
+                        setPropertyPerks(0);
+                        setEducationStatSpecific(0);
+                        setEducationGeneral(0);
+                        setJobPerks(0);
+                        setBookPerks(0);
+                        setSteadfastBonus({ str: 0, def: 0, spd: 0, dex: 0 });
                         setResults([]);
                         setAllocationResults(null);
                       }

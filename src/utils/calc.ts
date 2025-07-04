@@ -1,9 +1,8 @@
-// ================================================================
-// calc.ts – Torn gym‑gain estimator (fault‑tolerant, July‑2025 patch)
+// calc.ts – Torn gym-gain estimator (fault-tolerant, July-2025 patch)
 // ================================================================
 
 // ----------------------------------------------------------------
-// 1.  Stat‑specific regression constants (unchanged)
+// 0.  Stat-specific regression constants (unchanged)
 // ----------------------------------------------------------------
 const STAT_CONSTANTS = {
   str: { A: 1600, B: 1700, C: 700 },
@@ -15,100 +14,139 @@ const STAT_CONSTANTS = {
 type StatKey = 'str' | 'def' | 'spd' | 'dex';
 
 // ----------------------------------------------------------------
-// 1b.  Authoritative gym‑dot table (2025‑07‑04 live tooltip scrape)
-//      Note: The in‑game tooltips now show **two‑decimal** gains. The
-//      Wiki has not been fully updated – these figures are the real
-//      ones currently shown in Torn.
+// 1.  Stat-gains interface matching Sheet2 columns
 // ----------------------------------------------------------------
-export const GYM_GAINS: Record<string, Record<StatKey, number>> = {
-  // ————— LIGHT‑WEIGHT (5E) —————
-  'Premier Fitness':           { str: 2.00, spd: 2.00, def: 2.00, dex: 2.00 },
-  'Average Joes':              { str: 2.40, spd: 2.40, def: 2.70, dex: 2.40 },
-  "Woody's Workout":           { str: 2.70, spd: 3.20, def: 3.00, dex: 2.70 },
-  'Beach Bods':                { str: 3.20, spd: 3.20, def: 3.20, dex: 0.00 },
-  'Silver Gym':                { str: 3.40, spd: 3.60, def: 3.40, dex: 3.20 },
-  'Pour Femme':                { str: 3.40, spd: 3.60, def: 3.60, dex: 3.80 },
-  'Davies Den':                { str: 3.70, spd: 0.00, def: 3.70, dex: 3.70 },
-  'Global Gym':                { str: 4.00, spd: 4.00, def: 4.00, dex: 4.00 },
+export interface StatGains {
+  energyPerTrain: number; // Energy per session (E)
+  str: number;            // Strength dots per session
+  spd: number;            // Speed dots per session
+  def: number;            // Defense dots per session
+  dex: number;            // Dexterity dots per session
+}
 
-  // ————— MIDDLE‑WEIGHT (10E) —————
-  'Knuckle Heads':             { str: 4.67, spd: 4.25, def: 3.94, dex: 4.13 },
-  'Pioneer Fitness':           { str: 4.38, spd: 4.60, def: 4.82, dex: 4.38 },
-  'Anabolic Anomalies':        { str: 4.96, spd: 4.55, def: 5.23, dex: 4.55 },
-  'Core':                      { str: 4.98, spd: 5.21, def: 4.98, dex: 4.98 },
-  'Racing Fitness':            { str: 4.98, spd: 5.38, def: 4.78, dex: 5.18 },
-  'Complete Cardio':           { str: 5.45, spd: 5.67, def: 5.46, dex: 5.17 },
-  'Legs, Bums and Tums':       { str: 0.00, spd: 5.48, def: 5.48, dex: 5.67 },
-  'Deep Burn':                 { str: 5.96, spd: 5.96, def: 5.96, dex: 5.96 },
+// ----------------------------------------------------------------
+// 2.  Authoritative gym-dot table (2025-07-04 live tooltip scrape)
+//     from Sheet2 (two-decimal dots and energy cost)
+// ----------------------------------------------------------------
+export const GYM_GAINS: Record<string, StatGains> = {
+  // ————— LIGHT-WEIGHT (5E) —————
+  'Premier Fitness':           { energyPerTrain: 5,  str: 2.00, spd: 2.00, def: 2.00, dex: 2.00 },
+  'Average Joes':              { energyPerTrain: 5,  str: 2.40, spd: 2.40, def: 2.80, dex: 2.40 },
+  "Woody's Workout":          { energyPerTrain: 5,  str: 2.80, spd: 3.20, def: 3.00, dex: 2.80 },
+  'Beach Bods':                { energyPerTrain: 5,  str: 3.20, spd: 3.20, def: 3.20, dex: 0.00 },
+  'Silver Gym':                { energyPerTrain: 5,  str: 3.40, spd: 3.60, def: 3.40, dex: 3.20 },
+  'Pour Femme':                { energyPerTrain: 5,  str: 3.40, spd: 3.60, def: 3.60, dex: 3.80 },
+  'Davies Den':                { energyPerTrain: 5,  str: 3.70, spd: 0.00, def: 3.70, dex: 3.70 },
+  'Global Gym':                { energyPerTrain: 5,  str: 4.00, spd: 4.00, def: 4.00, dex: 4.00 },
 
-  // ————— HEAVY‑WEIGHT (10E) —————
-  'Apollo Gym':                { str: 5.97, spd: 6.17, def: 6.37, dex: 6.17 },
-  'Gun Shop':                  { str: 6.46, spd: 6.37, def: 6.17, dex: 6.17 },
-  'Force Training':            { str: 6.39, spd: 6.49, def: 6.39, dex: 6.75 },
-  "Cha Cha's":                 { str: 6.38, spd: 6.38, def: 6.78, dex: 6.98 },
-  'Atlas':                     { str: 6.98, spd: 6.38, def: 6.38, dex: 6.48 },
-  'Last Round':                { str: 6.79, spd: 6.48, def: 6.98, dex: 6.48 },
-  'The Edge':                  { str: 6.79, spd: 6.98, def: 6.98, dex: 6.79 },
-  "George's":                  { str: 7.25, spd: 7.25, def: 7.25, dex: 7.25 },
+  // ————— MIDDLE-WEIGHT (10E) —————
+  'Knuckle Heads':             { energyPerTrain: 10, str: 4.80, spd: 4.40, def: 4.00, dex: 4.20 },
+  'Pioneer Fitness':           { energyPerTrain: 10, str: 4.40, spd: 4.60, def: 4.80, dex: 4.40 },
+  'Anabolic Anomalies':        { energyPerTrain: 10, str: 5.00, spd: 4.60, def: 5.20, dex: 4.60 },
+  'Core':                      { energyPerTrain: 10, str: 5.00, spd: 5.20, def: 5.00, dex: 5.00 },
+  'Racing Fitness':            { energyPerTrain: 10, str: 5.00, spd: 5.40, def: 4.80, dex: 5.20 },
+  'Complete Cardio':           { energyPerTrain: 10, str: 5.50, spd: 5.80, def: 5.50, dex: 5.20 },
+  'Legs, Bums and Tums':       { energyPerTrain: 10, str: 0.00, spd: 5.60, def: 5.60, dex: 5.80 },
+  'Deep Burn':                 { energyPerTrain: 10, str: 6.00, spd: 6.00, def: 6.00, dex: 6.00 },
+
+  // ————— HEAVY-WEIGHT (10E) —————
+  'Apollo Gym':                { energyPerTrain: 10, str: 6.00, spd: 6.20, def: 6.40, dex: 6.20 },
+  'Gun Shop':                  { energyPerTrain: 10, str: 6.60, spd: 6.40, def: 6.20, dex: 6.20 },
+  'Force Training':            { energyPerTrain: 10, str: 6.40, spd: 6.60, def: 6.40, dex: 6.80 },
+  "Cha Cha's":                { energyPerTrain: 10, str: 6.40, spd: 6.40, def: 6.80, dex: 6.98 },
+  'Atlas':                     { energyPerTrain: 10, str: 7.00, spd: 6.40, def: 6.40, dex: 6.60 },
+  'Last Round':                { energyPerTrain: 10, str: 6.80, spd: 6.60, def: 7.00, dex: 6.60 },
+  'The Edge':                  { energyPerTrain: 10, str: 6.80, spd: 7.00, def: 7.00, dex: 6.80 },
+  "George's":                 { energyPerTrain: 10, str: 7.30, spd: 7.30, def: 7.30, dex: 7.30 },
 
   // ————— SPECIALIST —————
-  'Balboas Gym':               { str: 0.00, spd: 0.00, def: 7.50, dex: 7.50 },
-  'Frontline Fitness':         { str: 7.50, spd: 7.50, def: 0.00, dex: 0.00 },
-  'Gym 3000':                  { str: 8.00, spd: 0.00, def: 0.00, dex: 0.00 },
-  'Mr. Isoyamas':              { str: 0.00, spd: 0.00, def: 8.00, dex: 0.00 },
-  'Total Rebound':             { str: 0.00, spd: 8.00, def: 0.00, dex: 0.00 },
-  'Elites':                    { str: 0.00, spd: 0.00, def: 0.00, dex: 8.00 },
-  'Sports Science Lab':        { str: 9.00, spd: 9.00, def: 9.00, dex: 9.00 },
+  'Balboas Gym':               { energyPerTrain: 25, str: 0.00, spd: 0.00, def: 7.50, dex: 7.50 },
+  'Frontline Fitness':         { energyPerTrain: 25, str: 7.50, spd: 7.50, def: 0.00, dex: 0.00 },
+  'Gym 3000':                  { energyPerTrain: 50, str: 8.00, spd: 0.00, def: 0.00, dex: 0.00 },
+  'Mr. Isoyamas':              { energyPerTrain: 50, str: 0.00, spd: 0.00, def: 8.00, dex: 0.00 },
+  'Total Rebound':             { energyPerTrain: 50, str: 0.00, spd: 8.00, def: 0.00, dex: 0.00 },
+  'Elites':                    { energyPerTrain: 50, str: 0.00, spd: 0.00, def: 0.00, dex: 8.00 },
+  'Sports Science Lab':        { energyPerTrain: 25, str: 9.00, spd: 9.00, def: 9.00, dex: 9.00 },
 
   // ————— OTHER —————
-  'The Jail Gym':              { str: 3.40, spd: 3.40, def: 4.60, dex: 0.00 },
+  'The Jail Gym':              { energyPerTrain: 5,  str: 3.40, spd: 3.40, def: 4.60, dex: 0.00 },
 };
 
 // ----------------------------------------------------------------
-// 2.  Training‑perk interface (unchanged – trimmed to save space)
+// 3.  Training-perk interface
 // ----------------------------------------------------------------
 export interface TrainingPerks {
+  // Education multipliers
   sportsScience?: boolean;
   nutritionalScience?: boolean;
   analysisPerformance?: boolean;
+  
+  // Individual courses
   individualCourses?: Partial<Record<StatKey, number>>;
-  monthlyBookBonus?: Partial<Record<StatKey, number>>;
+  
+  // Gym gain modifiers
   generalGymBook?: boolean;
   specificGymBooks?: Partial<Record<StatKey, boolean>>;
+  
+  // Faction & merit modifiers
+  steadfast?: Partial<Record<StatKey, number>>;
+  merits?: Partial<Record<StatKey, number>>;
+  
+  // Misc modifiers
+  sportsShoes?: boolean;
+  
+  // UI-supplied bonuses
+  manualGymBonusPercent?: Partial<Record<StatKey, number>>;
+  monthlyBookBonus?: Partial<Record<StatKey, number>>;
+  
+  // Job point gains
   heavyLifting?: number;
   roidRage?: number;
   rockSalt?: number;
-  steadfast?: Partial<Record<StatKey, number>>;
-  merits?: Partial<Record<StatKey, number>>;
-  sportsShoes?: boolean;
-  manualGymBonusPercent?: Partial<Record<StatKey, number>>;
 }
 const NO_PERKS: TrainingPerks = {};
 
 // ----------------------------------------------------------------
-// 3.  Single‑train estimator (unchanged formula)
+// 4.  Single-train estimator with name normalization and no per-train rounding
 // ----------------------------------------------------------------
 export function computeGain(
   baseStat: number,
   happy: number,
   gymName: string,
-  energyUsed: number,
   stat: StatKey,
-  perks: TrainingPerks = NO_PERKS,
+  perks: TrainingPerks = NO_PERKS
 ): number {
+  // Normalize gym name to handle naming mismatches
+  const normalize = (name: string) =>
+    name.toLowerCase().replace(/&/g,'and').replace(/[,'']/g,'').replace(/\s+/g,' ').trim();
+  const normName = normalize(gymName);
+
+  // Lookup with fallback on normalized keys
+  let gains: StatGains | undefined = GYM_GAINS[gymName];
+  if (!gains) {
+    const entry = Object.entries(GYM_GAINS).find(([key]) => normalize(key) === normName);
+    gains = entry?.[1];
+  }
+  if (!gains) throw new Error(`Unknown gym: ${gymName}`);
+
+  // TypeScript assertion: gains is guaranteed to be defined after the error check
+  const validGains = gains as StatGains;
+  const energyUsed = validGains.energyPerTrain;
+  const G = validGains[stat];
+  const { A,B,C } = STAT_CONSTANTS[stat];
+
   const S = Math.min(
     calculateEffectiveStats({ str: baseStat, def: baseStat, spd: baseStat, dex: baseStat }, perks)[stat],
-    50_000_000,
+    50_000_000
   );
-  const G = GYM_GAINS[gymName]?.[stat] ?? 4.0;
-  const { A, B, C } = STAT_CONSTANTS[stat];
-  const happyMult  = 1 + 0.07 * Math.log(1 + happy / 250);
-  const core       = S * happyMult + 8 * happy ** 1.05 + (1 - (happy / 99_999) ** 2) * A + B;
-  const baseGain   = (core * G * energyUsed) / 200_000;
-  const avgRandom  = (C / 2) * G * energyUsed / 200_000;
-  const gymMult    = calculateGymGainsMultiplier(stat, perks);
-  const jobPts     = calculateJobPointGains(stat, perks, energyUsed);
-  return +((baseGain + avgRandom) * gymMult + jobPts).toFixed(2);
+  const happyMult = 1 + 0.07 * Math.log(1 + happy / 250);
+  const core      = S * happyMult + 8 * happy ** 1.05 + (1 - (happy / 99_999) ** 2) * A + B;
+  const baseGain  = (core * G * energyUsed) / 200_000;
+  const avgRandom = (C/2) * G * energyUsed / 200_000;
+  const gymMult   = calculateGymGainsMultiplier(stat, perks);
+  const jobPts    = calculateJobPointGains(stat, perks, energyUsed);
+
+  return (baseGain + avgRandom) * gymMult + jobPts;
 }
 
 // ----------------------------------------------------------------
@@ -182,22 +220,40 @@ export function calculateJobPointGains(stat: StatKey, perks: TrainingPerks = NO_
   return jp;
 }
 
+// 7.5. Helper function to get gym energy
+// ----------------------------------------------------------------
+export function getGymEnergy(gymName: string): number {
+  const normalize = (name: string) =>
+    name.toLowerCase().replace(/&/g,'and').replace(/[,'']/g,'').replace(/\s+/g,' ').trim();
+  const normName = normalize(gymName);
+
+  let gains: StatGains | undefined = GYM_GAINS[gymName];
+  if (!gains) {
+    const entry = Object.entries(GYM_GAINS).find(([key]) => normalize(key) === normName);
+    gains = entry?.[1];
+  }
+  if (!gains) throw new Error(`Unknown gym: ${gymName}`);
+
+  return gains.energyPerTrain;
+}
+
 // 8.  Batch simulation helper
 // ----------------------------------------------------------------
 export function calculateMultipleTrains(
   baseStat: number,
   initialHappy: number,
   gymName: string,
-  energyPerTrain: number,
   trains: number,
   stat: StatKey,
   perks: TrainingPerks = NO_PERKS,
 ) {
+  const energyPerTrain = getGymEnergy(gymName);
+  
   let total = 0;
   let H = initialHappy;
   const perTrain: number[] = [];
   for (let i = 0; i < trains; i++) {
-    const g = computeGain(baseStat, H, gymName, energyPerTrain, stat, perks);
+    const g = computeGain(baseStat, H, gymName, stat, perks);
     perTrain.push(g);
     total += g;
     H = Math.max(0, H - calculateHappyLoss(energyPerTrain));

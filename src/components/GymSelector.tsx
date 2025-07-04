@@ -1,5 +1,6 @@
 import React from 'react';
 import { Gym } from '../data/gyms';
+import { getGymEnergy } from '../utils/calc';
 
 interface GymSelectorProps {
   gyms: Gym[];
@@ -8,11 +9,11 @@ interface GymSelectorProps {
 }
 
 export default function GymSelector({ gyms, selected, onChange }: GymSelectorProps) {
-  // Group gyms by energy cost
-  const lowEnergyGyms = gyms.filter(g => g.energy === 5);
-  const mediumEnergyGyms = gyms.filter(g => g.energy === 10);
-  const specialGyms25E = gyms.filter(g => g.energy === 25);
-  const specialGyms50E = gyms.filter(g => g.energy === 50);
+  // Group gyms by energy cost using the calc function
+  const lowEnergyGyms = gyms.filter(g => getGymEnergy(g.name) === 5);
+  const mediumEnergyGyms = gyms.filter(g => getGymEnergy(g.name) === 10);
+  const specialGyms25E = gyms.filter(g => getGymEnergy(g.name) === 25);
+  const specialGyms50E = gyms.filter(g => getGymEnergy(g.name) === 50);
 
   return (
     <select
