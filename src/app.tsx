@@ -274,7 +274,7 @@ export default function App() {
                     {/* Right side - Subtitle and badges */}
                     <div className="text-right space-y-3">
                       <p className="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-300">
-                        Advanced Training Prediction
+                        Training Prediction
                       </p>
                       <div className="flex items-center justify-end gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
                         <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full font-medium">
@@ -282,11 +282,7 @@ export default function App() {
                         </span>
                         <span className="text-gray-400">•</span>
                         <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full font-medium">
-                          99% Accurate
-                        </span>
-                        <span className="text-gray-400">•</span>
-                        <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-full font-medium">
-                          Real-time
+                          Optimized
                         </span>
                       </div>
                     </div>
