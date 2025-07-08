@@ -434,7 +434,8 @@ export default function App() {
       <div style={{
         width: '100%',
         maxWidth: '900px',
-        backgroundColor: '#191919'
+        backgroundColor: '#191919',
+        padding: '20px 0'
       }}>
       {/* Header */}
       <div style={{
