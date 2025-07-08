@@ -1,17 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Torn City Gym Calculator - Minimal CSS */
 
-/* Ensure dark mode works properly */
-html {
-  color-scheme: light dark;
-}
-
-html.dark {
-  color-scheme: dark;
-}
-
-/* Remove number input arrows completely - all states */
+/* Remove number input arrows completely */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -23,7 +12,7 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Remove arrows on hover and focus states */
+/* Remove arrows on all states */
 input[type="number"]:hover::-webkit-outer-spin-button,
 input[type="number"]:hover::-webkit-inner-spin-button,
 input[type="number"]:focus::-webkit-outer-spin-button,
@@ -33,7 +22,7 @@ input[type="number"]:focus::-webkit-inner-spin-button {
   display: none !important;
 }
 
-/* Firefox specific - remove arrows completely */
+/* Firefox specific */
 input[type="number"]:hover,
 input[type="number"]:focus {
   -moz-appearance: textfield;
@@ -46,219 +35,150 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Remove default select styling and arrows */
+/* Remove default select styling */
 select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   background-image: none;
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 1.5em 1.5em;
 }
 
-/* Remove IE select arrow */
 select::-ms-expand {
   display: none;
 }
 
-/* Remove Firefox select arrow */
 select:-moz-focusring {
   color: transparent;
   text-shadow: 0 0 0 currentColor;
 }
 
-/* Custom range slider styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  outline: none;
-}
-
-/* Webkit slider track */
-input[type="range"]::-webkit-slider-track {
-  background: #e2e8f0;
-  height: 8px;
-  border-radius: 4px;
-}
-
-.dark input[type="range"]::-webkit-slider-track {
-  background: #4a5568;
-}
-
-/* Webkit slider thumb */
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Firefox slider track */
-input[type="range"]::-moz-range-track {
-  background: #e2e8f0;
-  height: 8px;
-  border-radius: 4px;
-  border: none;
-}
-
-.dark input[type="range"]::-moz-range-track {
-  background: #4a5568;
-}
-
-/* Firefox slider thumb */
-input[type="range"]::-moz-range-thumb {
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  border: none;
-  transition: all 0.2s ease;
-}
-
-input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Range slider focus styles */
-input[type="range"]:focus::-webkit-slider-thumb {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-input[type="range"]:focus::-moz-range-thumb {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-/* Custom scrollbar */
+/* Basic scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-700;
+  background: #333333;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  background: #666666;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-500;
+  background: #777777;
 }
 
-/* Smooth transitions for all elements */
+/* Remove default margins and paddings */
 * {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  box-sizing: border-box;
 }
 
-/* Custom focus styles */
-.focus-visible {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #222222;
+  color: white;
 }
 
-/* Glass effect for cards */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+/* Button hover effects */
+button {
+  cursor: pointer;
+  transition: background-color 0.1s ease;
 }
 
-.dark .glass-effect {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+button:hover {
+  filter: brightness(1.1);
 }
 
-/* Animate gradient backgrounds */
-@keyframes gradient-x {
-  0%, 100% {
-    transform: translateX(0%);
+button:active {
+  filter: brightness(0.9);
+}
+
+/* Input focus styles */
+input:focus {
+  outline: 1px solid #88cc88;
+}
+
+/* Remove outline on buttons */
+button:focus {
+  outline: none;
+}
+
+/* Link styling */
+a {
+  color: #88cc88;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #aaffaa;
+}
+
+/* Enhanced hover effects for gym buttons */
+button[title]:hover {
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+  z-index: 10;
+  position: relative;
+}
+
+/* Ensure buttons have no extra spacing */
+button[style*="margin: 0px"] {
+  margin: 0 !important;
+  border-collapse: collapse;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1200px) {
+  /* Reduce columns for medium screens */
+  div[style*="gridTemplateColumns: repeat(8, 1fr)"] {
+    grid-template-columns: repeat(6, 1fr) !important;
   }
-  50% {
-    transform: translateX(100%);
-  }
 }
 
-.animate-gradient-x {
-  animation: gradient-x 15s ease infinite;
-}
-
-/* Hover effects */
-.hover-lift:hover {
-  transform: translateY(-2px);
-}
-
-.hover-glow:hover {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-}
-
-/* Loading animation */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Custom button styles */
-.btn-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transition: all 0.3s ease;
-}
-
-.btn-gradient:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-
-/* Responsive design improvements */
 @media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+  /* Further reduce columns for tablet */
+  div[style*="gridTemplateColumns: repeat(8, 1fr)"] {
+    grid-template-columns: repeat(4, 1fr) !important;
   }
   
-  .grid-responsive {
-    grid-template-columns: 1fr;
+  /* Stack forms on mobile */
+  div[style*="gridTemplateColumns: repeat(auto-fit, minmax(220px, 1fr))"] {
+    grid-template-columns: 1fr !important;
   }
-} @tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Ensure dark mode works properly */
-html {
-  color-scheme: light dark;
+  
+  div[style*="gridTemplateColumns: repeat(5, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  div[style*="gridTemplateColumns: repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Adjust gym button sizes */
+  button[style*="width: 92px"] {
+    width: 70px !important;
+    height: 40px !important;
+  }
 }
 
-html.dark {
-  color-scheme: dark;
+@media (max-width: 480px) {
+  /* Mobile view - fewer columns */
+  div[style*="gridTemplateColumns: repeat(8, 1fr)"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  /* Single column on very small screens */
+  div[style*="gridTemplateColumns: repeat(2, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Smaller gym squares on mobile */
+  button[style*="width: 92px"] {
+    width: 50px !important;
+    height: 35px !important;
+    font-size: 9px !important;
+  }
 }

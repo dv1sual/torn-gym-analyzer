@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { gyms } from './data/gyms';
 import { computeGain, calculateMultipleTrains, TrainingPerks, getGymEnergy } from './utils/calc';
-import GymSelector from './components/GymSelector';
-import StatsInput from './components/StatsInput';
-import HappyEnergyInput from './components/HappyEnergyInput';
-import Results from './components/Results';
-import ToggleSwitch from './components/ToggleSwitch';
 
 type StatAllocation = {
   str: number;
@@ -31,7 +26,7 @@ export default function App() {
   const [selectedGym, setSelectedGym] = useState(() => getInitialState('gymCalc_selectedGym', gyms[0].name));
   const [results, setResults] = useState<any[]>([]);
   const [dynamicHappy, setDynamicHappy] = useState(() => getInitialState('gymCalc_dynamicHappy', false));
-  const [darkMode, setDarkMode] = useState(() => getInitialState('gymCalc_darkMode', false));
+  const [darkMode, setDarkMode] = useState(() => getInitialState('gymCalc_darkMode', true)); // Default to dark
 
   // Energy allocation state
   const [energyAllocation, setEnergyAllocation] = useState(() => getInitialState('gymCalc_energyAllocation', {
@@ -48,7 +43,7 @@ export default function App() {
   const [jobPerks, setJobPerks] = useState(() => getInitialState('gymCalc_jobPerks', 0));
   const [bookPerks, setBookPerks] = useState(() => getInitialState('gymCalc_bookPerks', 0));
   
-  // Faction steadfast bonuses (separate from other perks)
+  // Faction steadfast bonuses
   const [steadfastBonus, setSteadfastBonus] = useState(() => getInitialState('gymCalc_steadfastBonus', {
     str: 0,
     def: 0,
@@ -57,13 +52,8 @@ export default function App() {
   }));
 
   const [allocationResults, setAllocationResults] = useState<any>(null);
-
-  useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    }
-  }, [darkMode]);
+  const [showResults, setShowResults] = useState(false);
+  const [activeTab, setActiveTab] = useState('calculator');
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -120,19 +110,15 @@ export default function App() {
 
   // Convert bonus inputs to the perks format for calculations
   const createPerksObject = (): TrainingPerks => {
-    // Apply all non-steadfast bonuses as a single manual gym bonus percentage
     const totalBonus = (Number(propertyPerks) || 0) + (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0) + (Number(jobPerks) || 0) + (Number(bookPerks) || 0);
     
     return {
-      // Apply all bonuses as manual gym bonus (this covers all multiplicative bonuses)
       manualGymBonusPercent: {
         str: totalBonus,
         def: totalBonus,
         spd: totalBonus,
         dex: totalBonus
       },
-      
-      // Faction steadfast bonuses (separate multiplicative bonuses)
       steadfast: steadfastBonus
     };
   };
@@ -160,19 +146,17 @@ export default function App() {
     (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
       if (trainsPerStat[key] > 0) {
         if (dynamicHappy) {
-            // Use multiple trains calculation with dynamic happy loss
-            const result = calculateMultipleTrains(
-              stats[key],
-              happy,
-              gym.name,
-              trainsPerStat[key],
-              key,
-              perks
-            );
+          const result = calculateMultipleTrains(
+            stats[key],
+            happy,
+            gym.name,
+            trainsPerStat[key],
+            key,
+            perks
+          );
           gainsPerStat[key] = result.totalGain;
         } else {
-          // Static happy calculation
-            const gain = computeGain(stats[key], happy, gym.name, key, perks);
+          const gain = computeGain(stats[key], happy, gym.name, key, perks);
           gainsPerStat[key] = gain * trainsPerStat[key];
         }
       }
@@ -194,20 +178,16 @@ export default function App() {
       const trains = Math.floor(energy / gymEnergy);
       const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
 
-      // Calculate potential gain for each stat if ALL energy went to that stat
       let maxSingleStatGain = 0;
       
       (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
-        // Only calculate gains if the gym actually offers training for this stat
         const gymData = gyms.find(g => g.name === gym.name);
         const gymHasStat = gymData && gymData.dots[key] > 0;
         
         if (trains > 0 && gymHasStat) {
-          // Calculate what you'd get if ALL energy went to this one stat
           let singleStatGain = 0;
           
           if (dynamicHappy) {
-            // Use multiple trains calculation with dynamic happy loss
             const result = calculateMultipleTrains(
               stats[key],
               happy,
@@ -218,421 +198,912 @@ export default function App() {
             );
             singleStatGain = result.totalGain;
           } else {
-            // Static happy calculation
             const gain = computeGain(stats[key], happy, gym.name, key, perks);
             singleStatGain = gain * trains;
           }
           
-          // Store individual stat potential and track maximum
           perStat[key] = singleStatGain;
           maxSingleStatGain = Math.max(maxSingleStatGain, singleStatGain);
         }
       });
 
-      // Total is the maximum gain possible from focusing on the best single stat
       const total = maxSingleStatGain;
       return { name: gym.name, perStat, total };
     });
 
     setResults(sessionResults);
 
-    // Calculate allocation for selected gym
     const selectedGymData = gyms.find(g => g.name === selectedGym);
     if (selectedGymData) {
       const allocationResult = calculateEnergyAllocation(selectedGymData, energyAllocation);
       setAllocationResults(allocationResult);
     }
+
+    setShowResults(true);
+    setActiveTab('results'); // Auto-navigate to results
   };
 
+  const resetAllSettings = () => {
+    if (confirm('Are you sure you want to reset all settings to defaults?')) {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('gymCalc_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      setStats({ str: 0, def: 0, spd: 0, dex: 0 });
+      setHappy(0);
+      setEnergy(0);
+      setSelectedGym(gyms[0].name);
+      setDynamicHappy(false);
+      setDarkMode(true);
+      setEnergyAllocation({ str: 25, def: 25, spd: 25, dex: 25 });
+      setPropertyPerks(0);
+      setEducationStatSpecific(0);
+      setEducationGeneral(0);
+      setJobPerks(0);
+      setBookPerks(0);
+      setSteadfastBonus({ str: 0, def: 0, spd: 0, dex: 0 });
+      setResults([]);
+      setAllocationResults(null);
+      setShowResults(false);
+    }
+  };
+
+  // Helper function for gym energy with fallback
+  const getGymEnergyWithFallback = (gymName: string) => {
+    try {
+      return getGymEnergy(gymName);
+    } catch {
+      return 10; // Default fallback
+    }
+  };
+
+  const StatInput = ({ label, value, onChange, color }: { label: string; value: number; onChange: (val: number) => void; color: string }) => (
+    <div style={{
+      backgroundColor: '#2a2a2a',
+      border: '1px solid #444444',
+      padding: '10px',
+      margin: '5px',
+      borderRadius: '8px'
+    }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
+        <span style={{color: color, fontSize: '20px'}}>
+          {label === 'Strength' && '💪'}
+          {label === 'Defense' && '🛡️'}
+          {label === 'Speed' && '⚡'}
+          {label === 'Dexterity' && '🎯'}
+        </span>
+        <div>
+          <div style={{color: color, fontSize: '13px', fontWeight: 'bold'}}>
+            {label.toUpperCase()}
+          </div>
+          <div style={{color: 'white', fontSize: '18px', fontWeight: 'bold'}}>
+            {value.toLocaleString()}
+          </div>
+        </div>
+      </div>
+      
+      <div style={{color: '#999999', fontSize: '11px', marginBottom: '8px'}}>
+        Current Level
+      </div>
+      
+      <input
+        type="text"
+        value={value || ''}
+        onChange={(e) => {
+          const cleanValue = e.target.value.replace(/,/g, '');
+          onChange(parseInt(cleanValue) || 0);
+        }}
+        onFocus={(e) => {
+          if (e.target.value === '0') {
+            e.target.value = '';
+          }
+        }}
+        onBlur={(e) => {
+          if (e.target.value === '') {
+            e.target.value = '0';
+          }
+        }}
+        style={{
+          width: '100%',
+          backgroundColor: '#222222',
+          border: '1px solid #666666',
+          color: 'white',
+          padding: '4px 8px',
+          fontSize: '12px'
+        }}
+        placeholder="e.g. 1,000,000"
+      />
+    </div>
+  );
+
+  const GymSquare = ({ gymName, selected, onClick }: { gymName: string; selected: boolean; onClick: () => void }) => {
+    const energyCost = getGymEnergyWithFallback(gymName);
+    const [isHovered, setIsHovered] = useState(false);
+    
+    // Get gym initials from name
+    const getGymInitials = (name: string) => {
+      const words = name.split(' ').filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+      } else if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    };
+    
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <button
+          onClick={onClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            width: '100%',
+            height: '60px',
+            backgroundColor: selected ? '#4a7c59' : '#3a3a3a',
+            border: selected ? '2px solid #6b9b7a' : '1px solid #555555',
+            cursor: 'pointer',
+            fontSize: '16px',
+            color: 'white',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            borderRadius: '4px'
+          }}
+        >
+          <div style={{
+            fontSize: '14px', 
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}>
+            {getGymInitials(gymName)}
+          </div>
+          <div style={{
+            position: 'absolute',
+            bottom: '1px',
+            right: '2px',
+            fontSize: '8px',
+            color: '#cccccc',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: '1px 2px',
+            borderRadius: '2px'
+          }}>
+            {energyCost}E
+          </div>
+          {selected && (
+            <div style={{
+              position: 'absolute',
+              top: '1px',
+              left: '2px',
+              fontSize: '10px',
+              color: '#4a7c59',
+              fontWeight: 'bold'
+            }}>
+              ✓
+            </div>
+          )}
+        </button>
+        {isHovered && (
+          <div style={{
+            position: 'absolute',
+            bottom: '55px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            color: 'white',
+            padding: '6px 10px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
+            zIndex: 1000,
+            border: '1px solid #555555',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+          }}>
+            {gymName}
+            <div style={{
+              position: 'absolute',
+              bottom: '-5px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '0',
+              height: '0',
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderTop: '5px solid rgba(0, 0, 0, 0.95)'
+            }}></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const sorted = [...results].sort((a, b) => b.total - a.total).slice(0, 10);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 transition-all duration-500">
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-600 p-6 mb-8">
-            <div className="text-center">
-              <div className="relative">
-                {/* Background decoration */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-64 h-24 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl"></div>
-                </div>
-                
-                {/* Main title */}
-                <div className="relative">
-                  <div className="flex items-center justify-between">
-                    {/* Left side - Title */}
-                    <div className="text-left">
-                      <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-1 tracking-tight">
-                        TORN
-                      </h1>
-                      <div className="text-lg md:text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-200 dark:to-gray-400 bg-clip-text text-transparent tracking-wide">
-                        Gym Stats Calculator
-                      </div>
-                    </div>
-                    
-                    {/* Right side - Subtitle and badges */}
-                    <div className="text-right space-y-3">
-                      <p className="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-300">
-                        Training Prediction
-                      </p>
-                      <div className="flex items-center justify-end gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
-                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full font-medium">
-                          Vladar Formula
-                        </span>
-                        <span className="text-gray-400">•</span>
-                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full font-medium">
-                          Optimized
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#2c2c2c',
+      color: '#cccccc',
+      fontFamily: 'Arial, sans-serif',
+      display: 'flex',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '1200px',
+        backgroundColor: '#2c2c2c'
+      }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        border: '1px solid #444444',
+        borderBottom: '2px solid #444444',
+        padding: '8px 12px',
+        borderRadius: '8px 8px 0 0'
+      }}>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <div style={{
+              width: '100px',
+              height: '40px',
+              background: 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 50%, #1a1a1a 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#888888',
+              fontWeight: 'bold',
+              fontSize: '18px',
+              border: '1px solid #333333',
+              borderRadius: '2px',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.5)',
+              letterSpacing: '2px',
+              textShadow: '0 1px 0 rgba(0,0,0,0.8), 0 -1px 0 rgba(255,255,255,0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%)',
+                pointerEvents: 'none'
+              }}></div>
+              TORN
+            </div>
+            <h1 style={{color: 'white', fontSize: '16px', fontWeight: 'bold', margin: 0}}>
+              Gym Stats Calculator
+            </h1>
+          </div>
+          <div style={{display: 'flex', gap: '8px'}}>
+            <button 
+              onClick={() => setActiveTab('calculator')}
+              style={{
+                padding: '4px 8px',
+                backgroundColor: activeTab === 'calculator' ? '#88cc88' : '#444444',
+                border: '1px solid #666666',
+                color: 'white',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              📊 Calculator
+            </button>
+            <button 
+              onClick={() => setActiveTab('results')}
+              style={{
+                padding: '4px 8px',
+                backgroundColor: activeTab === 'results' ? '#88cc88' : '#444444',
+                border: '1px solid #666666',
+                color: 'white',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              📈 Results
+            </button>
+            <button 
+              onClick={() => setActiveTab('settings')}
+              style={{
+                padding: '4px 8px',
+                backgroundColor: activeTab === 'settings' ? '#88cc88' : '#444444',
+                border: '1px solid #666666',
+                color: 'white',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              ⚙️ Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Subtitle */}
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        border: '1px solid #555555',
+        padding: '10px',
+        fontSize: '12px'
+      }}>
+        <div style={{color: '#cccccc'}}>
+          Training Prediction using <span style={{color: '#88cc88', fontWeight: 'bold'}}>Vladar Formula</span> • 
+          Optimized for maximum gains • 2025 - dv1sual[3616352]
+        </div>
+      </div>
+
+      {activeTab === 'calculator' && (
+        <>
+          {/* Current Stats */}
+          <div style={{
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #444444',
+            padding: '8px 12px',
+            marginBottom: '12px'
+          }}>
+            <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+              📊 Current Stats
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '0px'
+            }}>
+              <StatInput 
+                label="Strength" 
+                value={stats.str} 
+                onChange={(val) => setStats({...stats, str: val})}
+                color="#88cc88"
+              />
+              <StatInput 
+                label="Defense" 
+                value={stats.def} 
+                onChange={(val) => setStats({...stats, def: val})}
+                color="#88cc88"
+              />
+              <StatInput 
+                label="Speed" 
+                value={stats.spd} 
+                onChange={(val) => setStats({...stats, spd: val})}
+                color="#88cc88"
+              />
+              <StatInput 
+                label="Dexterity" 
+                value={stats.dex} 
+                onChange={(val) => setStats({...stats, dex: val})}
+                color="#88cc88"
+              />
+            </div>
+          </div>
+
+          {/* Training Setup */}
+          <div style={{
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #444444',
+            padding: '8px 12px',
+            marginBottom: '12px'
+          }}>
+            <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+              ⚡ Training Setup
+            </h2>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+              <div>
+                <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
+                  Happy Level
+                </label>
+                <input
+                  type="number"
+                  value={happy || ''}
+                  onChange={(e) => setHappy(parseInt(e.target.value) || 0)}
+                  onFocus={(e) => {
+                    if (e.target.value === '0') {
+                      e.target.value = '';
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      e.target.value = '0';
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
+                  Total Energy
+                </label>
+                <input
+                  type="number"
+                  value={energy || ''}
+                  onChange={(e) => setEnergy(parseInt(e.target.value) || 0)}
+                  onFocus={(e) => {
+                    if (e.target.value === '0') {
+                      e.target.value = '';
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      e.target.value = '0';
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  }}
+                />
               </div>
             </div>
           </div>
-          {/* Main Form */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-600 p-8 mb-8">
-            <div className="space-y-8">
-              {/* Top Row - Stats and Training Setup */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <span className="text-2xl">📊</span>
-                    Current Stats
-                  </h3>
-                  <StatsInput stats={stats} onChange={setStats} />
+
+          {/* Gym Selection */}
+          <div style={{
+            backgroundColor: '#333333',
+            border: '1px solid #555555',
+            padding: '12px',
+            marginBottom: '12px'
+          }}>
+            <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 12px 0'}}>
+              🏋️ Gym Selection
+            </h2>
+            
+            {/* Current Selection Display */}
+            <div style={{
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #555555',
+              padding: '8px 12px',
+              marginBottom: '12px',
+              borderRadius: '3px'
+            }}>
+              <span style={{color: '#cccccc', fontSize: '12px'}}>
+                Selected: <span style={{color: '#4a7c59', fontWeight: 'bold'}}>{selectedGym}</span>
+              </span>
+            </div>
+            
+            {/* Gym Grid - Full width with proper spacing */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(16, 1fr)',
+              gap: '2px',
+              backgroundColor: '#2a2a2a',
+              padding: '4px',
+              border: '1px solid #555555',
+              borderRadius: '2px'
+            }}>
+              {gyms.map((gym) => (
+                <GymSquare 
+                  key={gym.name}
+                  gymName={gym.name}
+                  selected={selectedGym === gym.name}
+                  onClick={() => setSelectedGym(gym.name)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Energy Allocation */}
+          <div style={{
+            backgroundColor: '#333333',
+            border: '1px solid #555555',
+            padding: '8px 12px',
+            marginBottom: '12px'
+          }}>
+            <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+              ⚖️ Energy Allocation
+            </h2>
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '8px'}}>
+              {(['str', 'def', 'spd', 'dex'] as const).map((stat) => (
+                <div key={stat}>
+                  <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
+                    {stat.toUpperCase()} Energy (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={energyAllocation[stat] || ''}
+                    onChange={(e) => setEnergyAllocation({...energyAllocation, [stat]: parseInt(e.target.value) || 0})}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        e.target.value = '';
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value === '') {
+                        e.target.value = '0';
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#222222',
+                      border: '1px solid #666666',
+                      color: 'white',
+                      padding: '4px 8px',
+                      fontSize: '12px'
+                    }}
+                  />
                 </div>
+              ))}
+            </div>
+            <div style={{color: '#cccccc', fontSize: '11px'}}>
+              Total Allocation: {energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex}%
+              {(energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex) !== 100 && (
+                <span style={{color: '#ffaa88'}}> (Should total 100%)</span>
+              )}
+            </div>
+          </div>
 
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <span className="text-2xl">⚡</span>
-                    Training Setup
-                  </h3>
-                  <HappyEnergyInput happy={happy} energy={energy} onChange={(h, e) => { setHappy(h); setEnergy(e); }} />
+          {/* Perks Bonuses */}
+          <div style={{
+            backgroundColor: '#333333',
+            border: '1px solid #555555',
+            padding: '8px 12px',
+            marginBottom: '12px'
+          }}>
+            <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+              📈 Perks Bonuses
+            </h2>
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '8px'}}>
+              <div>
+                <label style={{color: 'white', fontSize: '11px', display: 'block', marginBottom: '4px'}}>
+                  Property Perks (%)
+                </label>
+                <input
+                  type="number"
+                  value={propertyPerks || ''}
+                  onChange={(e) => setPropertyPerks(parseFloat(e.target.value) || 0)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '4px 6px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{color: 'white', fontSize: '11px', display: 'block', marginBottom: '4px'}}>
+                  Education (Stat) (%)
+                </label>
+                <input
+                  type="number"
+                  value={educationStatSpecific || ''}
+                  onChange={(e) => setEducationStatSpecific(parseFloat(e.target.value) || 0)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '4px 6px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{color: 'white', fontSize: '11px', display: 'block', marginBottom: '4px'}}>
+                  Education (General) (%)
+                </label>
+                <input
+                  type="number"
+                  value={educationGeneral || ''}
+                  onChange={(e) => setEducationGeneral(parseFloat(e.target.value) || 0)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '4px 6px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{color: 'white', fontSize: '11px', display: 'block', marginBottom: '4px'}}>
+                  Job Perks (%)
+                </label>
+                <input
+                  type="number"
+                  value={jobPerks || ''}
+                  onChange={(e) => setJobPerks(parseFloat(e.target.value) || 0)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '4px 6px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{color: 'white', fontSize: '11px', display: 'block', marginBottom: '4px'}}>
+                  Book Perks (%)
+                </label>
+                <input
+                  type="number"
+                  value={bookPerks || ''}
+                  onChange={(e) => setBookPerks(parseFloat(e.target.value) || 0)}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#222222',
+                    border: '1px solid #666666',
+                    color: 'white',
+                    padding: '4px 6px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{color: '#88cc88', fontSize: '11px'}}>
+              Total Bonus: {(Number(propertyPerks) || 0) + (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0) + (Number(jobPerks) || 0) + (Number(bookPerks) || 0)}% applied to all stats
+            </div>
+          </div>
+
+          {/* Faction Steadfast */}
+          <div style={{
+            backgroundColor: '#333333',
+            border: '1px solid #555555',
+            padding: '8px 12px'
+          }}>
+            <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+              🏛️ Faction Steadfast
+            </h2>
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '8px'}}>
+              {(['str', 'def', 'spd', 'dex'] as const).map((stat) => (
+                <div key={stat}>
+                  <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
+                    {stat.toUpperCase()} Steadfast (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={steadfastBonus[stat] || ''}
+                    onChange={(e) => setSteadfastBonus({...steadfastBonus, [stat]: parseFloat(e.target.value) || 0})}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#222222',
+                      border: '1px solid #666666',
+                      color: 'white',
+                      padding: '4px 8px',
+                      fontSize: '12px'
+                    }}
+                  />
                 </div>
-              </div>
+              ))}
+            </div>
+            <div style={{color: '#cccccc', fontSize: '11px'}}>
+              These bonuses are applied separately and stack multiplicatively.
+            </div>
+          </div>
 
-              {/* Gym Selection */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">🏋️</span>
-                  Gym Selection
-                </h3>
-                <GymSelector gyms={gyms} selected={selectedGym} onChange={setSelectedGym} />
-              </div>
+          {/* Calculate Button */}
+          <div style={{
+            backgroundColor: '#333333',
+            border: '1px solid #555555',
+            padding: '12px',
+            textAlign: 'center'
+          }}>
+            <button
+              onClick={runSimulation}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#4a7c59',
+                border: '1px solid #6b9b7a',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor = '#5a8c69';
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor = '#4a7c59';
+              }}
+            >
+              🔥 Compute Maximum Gains 🔥
+            </button>
+          </div>
+        </>
+      )}
 
-              {/* Energy Allocation Section */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">⚖️</span>
-                  Energy Allocation
-                </h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                      <div key={key} className="relative">
-                        <label className={`block text-sm font-semibold mb-2 uppercase tracking-wide ${
-                          key === 'str' ? 'text-red-600 dark:text-red-400' :
-                          key === 'def' ? 'text-green-600 dark:text-green-400' :
-                          key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
-                          'text-purple-600 dark:text-purple-400'
-                        }`}>
-                          {key.toUpperCase()} Energy
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={energyAllocation[key]}
-                            onFocus={(e) => {
-                              if (e.target.value === '0') {
-                                e.target.value = '';
-                              }
-                            }}
-                            onBlur={(e) => {
-                              if (e.target.value === '') {
-                                e.target.value = '0';
-                              }
-                            }}
-                            onChange={(e) => setEnergyAllocation((prev: StatAllocation) => ({
-                              ...prev,
-                              [key]: parseInt(e.target.value) || 0
-                            }))}
-                            className={`w-full px-3 py-2.5 pr-8 text-base font-medium bg-white dark:bg-gray-800 border-2 ${
-                              key === 'str' ? 'border-red-200 dark:border-red-800 focus:border-red-500' :
-                              key === 'def' ? 'border-green-200 dark:border-green-800 focus:border-green-500' :
-                              key === 'spd' ? 'border-blue-200 dark:border-blue-800 focus:border-blue-500' :
-                              'border-purple-200 dark:border-purple-800 focus:border-purple-500'
-                            } rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100`}
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <span className={`text-sm font-bold ${
-                              key === 'str' ? 'text-red-600 dark:text-red-400' :
-                              key === 'def' ? 'text-green-600 dark:text-green-400' :
-                              key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
-                              'text-purple-600 dark:text-purple-400'
-                            }`}>%</span>
-                          </div>
-                        </div>
+      {activeTab === 'results' && (
+        <div style={{
+          backgroundColor: '#333333',
+          border: '1px solid #555555',
+          padding: '8px 12px'
+        }}>
+          <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+            🏆 Training Results
+          </h2>
+          
+          {!showResults ? (
+            <div style={{
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #555555',
+              padding: '20px',
+              textAlign: 'center',
+              color: '#999999'
+            }}>
+              Click "Compute Maximum Gains" to see results
+            </div>
+          ) : (
+            <>
+              {/* Energy Allocation Results */}
+              {allocationResults && (
+                <div style={{
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #555555',
+                  padding: '12px',
+                  marginBottom: '12px'
+                }}>
+                  <h3 style={{color: '#88cc88', fontSize: '13px', margin: '0 0 8px 0'}}>
+                    ⚖️ Energy Allocation Results - {selectedGym}
+                  </h3>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '12px'}}>
+                    {(['str', 'def', 'spd', 'dex'] as const).map((stat) => (
+                      <div key={stat} style={{
+                        backgroundColor: '#333333',
+                        border: '1px solid #555555',
+                        padding: '8px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{color: '#88cc88', fontSize: '12px', fontWeight: 'bold'}}>{stat.toUpperCase()}</div>
+                        <div style={{color: 'white', fontSize: '16px', fontWeight: 'bold'}}>+{allocationResults.gainsPerStat[stat].toFixed(2)}</div>
+                        <div style={{color: '#999999', fontSize: '10px'}}>Energy: {allocationResults.energyPerStat[stat]} | Trains: {allocationResults.trainsPerStat[stat]}</div>
                       </div>
                     ))}
                   </div>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <p className="text-sm text-amber-700 dark:text-amber-300">
-                        <strong>Energy Distribution:</strong> Allocate your total energy across stats as percentages.
-                      </p>
-                    </div>
-                    
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <strong>Total Allocation:</strong> {energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex}%
-                        {(energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex) !== 100 && (
-                          <span className="text-amber-600 dark:text-amber-400 ml-2">
-                            (Should total 100% for optimal results)
-                          </span>
-                        )}
-                      </p>
-                    </div>
+                  <div style={{
+                    textAlign: 'center',
+                    color: '#88cc88',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}>
+                    Total Allocated Gain: +{allocationResults.totalGain.toFixed(2)}
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Perks Bonuses Section */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">📈</span>
-                  Perks Bonuses
+              {/* Top Gyms */}
+              <div style={{
+                backgroundColor: '#2a2a2a',
+                border: '1px solid #555555',
+                padding: '12px'
+              }}>
+                <h3 style={{color: '#88cc88', fontSize: '13px', margin: '0 0 8px 0'}}>
+                  🏆 Top 10 Gyms (All Energy)
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                      Property Perks (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={propertyPerks || ''}
-                      onChange={(e) => setPropertyPerks(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
-                      placeholder="0"
-                    />
+                {sorted.map((gym, index) => (
+                  <div key={gym.name} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '4px 8px',
+                    backgroundColor: gym.name === selectedGym ? '#444444' : '#333333',
+                    border: '1px solid #555555',
+                    marginBottom: '2px'
+                  }}>
+                    <span style={{color: '#cccccc', fontSize: '12px'}}>
+                      #{index + 1} {gym.name}
+                    </span>
+                    <span style={{color: '#88cc88', fontSize: '12px', fontWeight: 'bold'}}>
+                      {gym.total.toFixed(2)}
+                    </span>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                      Education (Stat Specific) (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={educationStatSpecific || ''}
-                      onChange={(e) => setEducationStatSpecific(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                      Education (General) (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={educationGeneral || ''}
-                      onChange={(e) => setEducationGeneral(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                      Job Perks (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={jobPerks || ''}
-                      onChange={(e) => setJobPerks(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                      Book Perks (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={bookPerks || ''}
-                      onChange={(e) => setBookPerks(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    <strong>Total Bonus:</strong> {(Number(propertyPerks) || 0) + (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0) + (Number(jobPerks) || 0) + (Number(bookPerks) || 0)}% applied to all stats
-                  </p>
-                </div>
+                ))}
               </div>
+            </>
+          )}
+        </div>
+      )}
 
-              {/* Faction Steadfast Section */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">🏛️</span>
-                  Faction Steadfast
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {(['str', 'def', 'spd', 'dex'] as const).map((key) => (
-                    <div key={key} className="relative">
-                      <label className={`block text-sm font-semibold mb-2 uppercase tracking-wide ${
-                        key === 'str' ? 'text-red-600 dark:text-red-400' :
-                        key === 'def' ? 'text-green-600 dark:text-green-400' :
-                        key === 'spd' ? 'text-blue-600 dark:text-blue-400' :
-                        'text-purple-600 dark:text-purple-400'
-                      }`}>
-                        {key.toUpperCase()} Steadfast (%)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={steadfastBonus[key] || ''}
-                        onChange={(e) => setSteadfastBonus((prev: StatAllocation) => ({ 
-                          ...prev, 
-                          [key]: parseFloat(e.target.value) || 0 
-                        }))}
-                        className={`w-full px-3 py-2 text-base bg-white dark:bg-gray-800 border-2 ${
-                          key === 'str' ? 'border-red-200 dark:border-red-800 focus:border-red-500' :
-                          key === 'def' ? 'border-green-200 dark:border-green-800 focus:border-green-500' :
-                          key === 'spd' ? 'border-blue-200 dark:border-blue-800 focus:border-blue-500' :
-                          'border-purple-200 dark:border-purple-800 focus:border-purple-500'
-                        } rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 text-gray-900 dark:text-gray-100`}
-                        placeholder="0"
-                      />
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-700 dark:text-green-300">
-                    <strong>Faction Steadfast:</strong> These bonuses are applied separately from other perks and stack multiplicatively.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Settings */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <span className="text-2xl">⚙️</span>
-                Settings
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <ToggleSwitch label="Dark Mode" enabled={darkMode} onToggle={setDarkMode} />
-                <ToggleSwitch label="Dynamic Happy Loss" enabled={dynamicHappy} onToggle={setDynamicHappy} />
-                <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600 transition-colors">
-                  <label className="text-sm font-medium text-red-700 dark:text-red-200 flex-1 pr-3">Reset All Settings</label>
-                  <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to reset all settings to defaults?')) {
-                        // Clear localStorage
-                        Object.keys(localStorage).forEach(key => {
-                          if (key.startsWith('gymCalc_')) {
-                            localStorage.removeItem(key);
-                          }
-                        });
-                        // Reset all state to defaults
-                        setStats({ str: 0, def: 0, spd: 0, dex: 0 });
-                        setHappy(0);
-                        setEnergy(0);
-                        setSelectedGym(gyms[0].name);
-                        setDynamicHappy(false);
-                        setDarkMode(false);
-                        setEnergyAllocation({ str: 25, def: 25, spd: 25, dex: 25 });
-                        setPropertyPerks(0);
-                        setEducationStatSpecific(0);
-                        setEducationGeneral(0);
-                        setJobPerks(0);
-                        setBookPerks(0);
-                        setSteadfastBonus({ str: 0, def: 0, spd: 0, dex: 0 });
-                        setResults([]);
-                        setAllocationResults(null);
-                      }
-                    }}
-                    className="inline-flex items-center justify-center px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-800"
-                  >
-                    <span className="text-xs mr-1">🗑️</span>
-                    Reset
-                  </button>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  <strong>💾 Auto-Save:</strong> Your settings are automatically saved and will persist between browser sessions.
-                </p>
-              </div>
-            </div>
-
-            {/* Compute Button */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+      {activeTab === 'settings' && (
+        <div style={{
+          backgroundColor: '#333333',
+          border: '1px solid #555555',
+          padding: '8px 12px'
+        }}>
+          <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+            ⚙️ Settings
+          </h2>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <span style={{color: '#cccccc', fontSize: '12px'}}>Dynamic Happy Loss</span>
               <button
-                onClick={runSimulation}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 text-lg"
+                onClick={() => setDynamicHappy(!dynamicHappy)}
+                style={{
+                  width: '40px',
+                  height: '20px',
+                  backgroundColor: dynamicHappy ? '#88cc88' : '#444444',
+                  border: '1px solid #666666',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  color: 'white'
+                }}
               >
-                <span className="flex items-center justify-center gap-3">
-                  <span className="text-2xl">🔥</span>
-                  Compute Maximum Gains
-                  <span className="text-2xl">🔥</span>
-                </span>
+                {dynamicHappy ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <span style={{color: '#cccccc', fontSize: '12px'}}>Dark Mode</span>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                style={{
+                  width: '40px',
+                  height: '20px',
+                  backgroundColor: darkMode ? '#88cc88' : '#444444',
+                  border: '1px solid #666666',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  color: 'white'
+                }}
+              >
+                {darkMode ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <span style={{color: '#cccccc', fontSize: '12px'}}>Reset All Settings</span>
+              <button
+                onClick={resetAllSettings}
+                style={{
+                  padding: '2px 8px',
+                  backgroundColor: '#cc4444',
+                  border: '1px solid #666666',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  color: 'white'
+                }}
+              >
+                🗑️ Reset
               </button>
             </div>
           </div>
-
-          {/* Results */}
-          <Results results={results} selected={selectedGym} allocationResults={allocationResults} />
-          
-          {/* Footer Credit */}
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              2025 - dv1sual[3616352]
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              This page wouldn't be possible without <span className="text-blue-500 dark:text-blue-400">Vladar[1996140]</span> and his{' '}
-              <a 
-                href="https://www.torn.com/forums.php#/p=threads&f=61&t=16182535&b=0&a=0" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline"
-              >
-                Training Gains Explained 2.0
-              </a> -  
-              <span className="text-purple-500 dark:text-purple-400"> Same_Sura[2157732]</span> for a ton of testing. 
-              Made with the help of <span className="text-emerald-500 dark:text-emerald-400">AI</span>.
-            </p>
+          <div style={{color: '#cccccc', fontSize: '10px', marginTop: '8px'}}>
+            💾 Auto-Save: Settings are automatically saved between sessions.
           </div>
         </div>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        border: '1px solid #555555',
+        padding: '8px 12px',
+        textAlign: 'center',
+        fontSize: '10px',
+        color: '#999999'
+      }}>
+        <div style={{marginBottom: '4px'}}>
+          This page wouldn't be possible without <span style={{color: '#88cc88'}}>Vladar[1996140]</span> and his{' '}
+          <a 
+            href="https://www.torn.com/forums.php#/p=threads&f=61&t=16182535&b=0&a=0" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{color: '#88cc88', textDecoration: 'underline'}}
+          >
+            Training Gains Explained 2.0
+          </a> - 
+          <span style={{color: '#88cc88'}}> Same_Sura[2157732]</span> for extensive testing.
+        </div>
+        <div>
+          Made with the help of <span style={{color: '#88cc88'}}>AI</span>.
+        </div>
+      </div>
       </div>
     </div>
   );
