@@ -425,7 +425,7 @@ export default function App() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#2c2c2c',
+      backgroundColor: '#191919',
       color: '#cccccc',
       fontFamily: 'Arial, sans-serif',
       display: 'flex',
@@ -433,8 +433,8 @@ export default function App() {
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '1200px',
-        backgroundColor: '#2c2c2c'
+        maxWidth: '900px',
+        backgroundColor: '#191919'
       }}>
       {/* Header */}
       <div style={{
@@ -442,7 +442,7 @@ export default function App() {
         border: '1px solid #444444',
         borderBottom: '2px solid #444444',
         padding: '8px 12px',
-        borderRadius: '8px 8px 0 0'
+        marginBottom: '12px'
       }}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
@@ -528,11 +528,11 @@ export default function App() {
         backgroundColor: '#2a2a2a',
         border: '1px solid #555555',
         padding: '10px',
-        fontSize: '12px'
+        fontSize: '12px',
+        marginBottom: '12px'
       }}>
         <div style={{color: '#cccccc'}}>
-          Training Prediction using <span style={{color: '#88cc88', fontWeight: 'bold'}}>Vladar Formula</span> • 
-          Optimized for maximum gains • 2025 - dv1sual[3616352]
+          Training Prediction using <span style={{color: '#88cc88', fontWeight: 'bold'}}>Vladar Formula</span> • 2025
         </div>
       </div>
 
@@ -550,7 +550,7 @@ export default function App() {
             </h2>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '0px'
             }}>
               <StatInput 
@@ -1101,7 +1101,7 @@ export default function App() {
           <span style={{color: '#88cc88'}}> Same_Sura[2157732]</span> for extensive testing.
         </div>
         <div>
-          Made with the help of <span style={{color: '#88cc88'}}>AI</span>.
+          Made with the help of <span style={{color: '#88cc88'}}>AI</span> • Created by <span style={{color: '#88cc88'}}>dv1sual[3616352]</span>
         </div>
       </div>
       </div>
