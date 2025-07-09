@@ -96,19 +96,24 @@ npm run test:coverage
 
 ## Test Results Summary
 
-**Current Status**: 36/36 tests passing (100% success rate) ✅
+**Current Status**: 68/68 tests passing (100% success rate) ✅
 
 **Passing Tests**:
 - All useResponsive hook tests ✅ (9/9)
 - All useLocalStorage hook tests ✅ (6/6)
 - All StatInput component tests ✅ (11/11)
 - All TrainingSetup component tests ✅ (10/10)
+- All EnergyAllocation component tests ✅ (10/10)
+- All PerksBonuses component tests ✅ (10/10)
+- All FactionSteadfast component tests ✅ (12/12)
 
 **Issues Fixed**:
 - ✅ localStorage mock behavior corrected
 - ✅ TrainingSetup input handling refined for real-world behavior
 - ✅ Number input display value handling properly tested
 - ✅ User interaction patterns accurately simulated
+- ✅ Multiple element selection issues resolved
+- ✅ Component-specific input behaviors properly tested
 
 ## Benefits Achieved
 
