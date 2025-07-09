@@ -45,6 +45,7 @@ export function useGymCalculator() {
   const [allocationResults, setAllocationResults] = useLocalStorage('gymCalc_allocationResults', null as any);
   const [showResults, setShowResults] = useLocalStorage('gymCalc_showResults', false);
   const [activeTab, setActiveTab] = useLocalStorage('gymCalc_activeTab', 'calculator');
+  const [isCalculating, setIsCalculating] = useLocalStorage('gymCalc_isCalculating', false);
 
   // Convert bonus inputs to the perks format for calculations
   const createPerksObject = (): TrainingPerks => {
@@ -108,57 +109,66 @@ export function useGymCalculator() {
     };
   };
 
-  const runSimulation = () => {
-    const perks = createPerksObject();
+  const runSimulation = async () => {
+    setIsCalculating(true);
     
-    const sessionResults = gyms.map((gym) => {
-      const gymEnergy = getGymEnergy(gym.name);
-      const trains = Math.floor(energy / gymEnergy);
-      const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
-
-      let maxSingleStatGain = 0;
+    try {
+      // Add small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
-        const gymData = gyms.find(g => g.name === gym.name);
-        const gymHasStat = gymData && gymData.dots[key] > 0;
+      const perks = createPerksObject();
+      
+      const sessionResults = gyms.map((gym) => {
+        const gymEnergy = getGymEnergy(gym.name);
+        const trains = Math.floor(energy / gymEnergy);
+        const perStat = { str: 0, def: 0, spd: 0, dex: 0 };
+
+        let maxSingleStatGain = 0;
         
-        if (trains > 0 && gymHasStat) {
-          let singleStatGain = 0;
+        (['str', 'def', 'spd', 'dex'] as const).forEach((key) => {
+          const gymData = gyms.find(g => g.name === gym.name);
+          const gymHasStat = gymData && gymData.dots[key] > 0;
           
-          if (dynamicHappy) {
-            const result = calculateMultipleTrains(
-              stats[key],
-              happy,
-              gym.name,
-              trains,
-              key,
-              perks
-            );
-            singleStatGain = result.totalGain;
-          } else {
-            const gain = computeGain(stats[key], happy, gym.name, key, perks);
-            singleStatGain = gain * trains;
+          if (trains > 0 && gymHasStat) {
+            let singleStatGain = 0;
+            
+            if (dynamicHappy) {
+              const result = calculateMultipleTrains(
+                stats[key],
+                happy,
+                gym.name,
+                trains,
+                key,
+                perks
+              );
+              singleStatGain = result.totalGain;
+            } else {
+              const gain = computeGain(stats[key], happy, gym.name, key, perks);
+              singleStatGain = gain * trains;
+            }
+            
+            perStat[key] = singleStatGain;
+            maxSingleStatGain = Math.max(maxSingleStatGain, singleStatGain);
           }
-          
-          perStat[key] = singleStatGain;
-          maxSingleStatGain = Math.max(maxSingleStatGain, singleStatGain);
-        }
+        });
+
+        const total = maxSingleStatGain;
+        return { name: gym.name, perStat, total };
       });
 
-      const total = maxSingleStatGain;
-      return { name: gym.name, perStat, total };
-    });
+      setResults(sessionResults);
 
-    setResults(sessionResults);
+      const selectedGymData = gyms.find(g => g.name === selectedGym);
+      if (selectedGymData) {
+        const allocationResult = calculateEnergyAllocation(selectedGymData, energyAllocation);
+        setAllocationResults(allocationResult);
+      }
 
-    const selectedGymData = gyms.find(g => g.name === selectedGym);
-    if (selectedGymData) {
-      const allocationResult = calculateEnergyAllocation(selectedGymData, energyAllocation);
-      setAllocationResults(allocationResult);
+      setShowResults(true);
+      setActiveTab('results'); // Auto-navigate to results
+    } finally {
+      setIsCalculating(false);
     }
-
-    setShowResults(true);
-    setActiveTab('results'); // Auto-navigate to results
   };
 
   const resetAllSettings = () => {
@@ -223,6 +233,8 @@ export function useGymCalculator() {
     setShowResults,
     activeTab,
     setActiveTab,
+    isCalculating,
+    setIsCalculating,
     
     // Functions
     createPerksObject,

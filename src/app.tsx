@@ -9,10 +9,14 @@ import PerksBonuses from './components/PerksBonuses';
 import FactionSteadfast from './components/FactionSteadfast';
 import Results from './components/Results';
 import SettingsTab from './components/SettingsTab';
+import Tooltip from './components/Tooltip';
+import LoadingSpinner from './components/LoadingSpinner';
+import NotificationSystem, { useNotifications } from './components/NotificationSystem';
 
 export default function App() {
   const calculator = useGymCalculator();
   const responsive = useResponsive();
+  const notifications = useNotifications();
 
   return (
     <div style={{
@@ -211,28 +215,47 @@ export default function App() {
               padding: '12px',
               textAlign: 'center'
             }}>
-              <button
-                onClick={calculator.runSimulation}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#4a7c59',
-                  border: '1px solid #6b9b7a',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  borderRadius: '4px',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5a8c69';
-                }}
-                onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4a7c59';
-                }}
-              >
-                🔥 Compute Maximum Gains 🔥
-              </button>
+              {calculator.isCalculating ? (
+                <LoadingSpinner text="Calculating gains..." />
+              ) : (
+                <Tooltip content="Calculate training gains for all gyms and show optimal allocation results">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await calculator.runSimulation();
+                        notifications.showSuccess('Calculations completed successfully!');
+                      } catch (error) {
+                        notifications.showError('Failed to calculate gains. Please try again.');
+                      }
+                    }}
+                    disabled={calculator.isCalculating}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: calculator.isCalculating ? '#666666' : '#4a7c59',
+                      border: '1px solid #6b9b7a',
+                      color: 'white',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: calculator.isCalculating ? 'not-allowed' : 'pointer',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s ease',
+                      opacity: calculator.isCalculating ? 0.7 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!calculator.isCalculating) {
+                        (e.target as HTMLButtonElement).style.backgroundColor = '#5a8c69';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!calculator.isCalculating) {
+                        (e.target as HTMLButtonElement).style.backgroundColor = '#4a7c59';
+                      }
+                    }}
+                  >
+                    🔥 Compute Maximum Gains 🔥
+                  </button>
+                </Tooltip>
+              )}
             </div>
           </>
         )}
@@ -306,6 +329,12 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Notification System */}
+      <NotificationSystem 
+        notifications={notifications.notifications}
+        onRemove={notifications.removeNotification}
+      />
     </div>
   );
 }
