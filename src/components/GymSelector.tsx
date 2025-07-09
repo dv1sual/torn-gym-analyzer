@@ -1,77 +1,176 @@
-import React from 'react';
-import { Gym } from '../data/gyms';
+import React, { useState } from 'react';
+import { gyms } from '../data/gyms';
 import { getGymEnergy } from '../utils/calc';
 
 interface GymSelectorProps {
-  gyms: Gym[];
-  selected: string;
-  onChange: (gym: string) => void;
+  selectedGym: string;
+  onGymSelect: (gymName: string) => void;
+  screenSize: 'mobile' | 'tablet' | 'desktop';
+  getGymGridColumns: () => string;
 }
 
-export default function GymSelector({ gyms, selected, onChange }: GymSelectorProps) {
-  // Group gyms by energy cost using the calc function
-  const lowEnergyGyms = gyms.filter(g => getGymEnergy(g.name) === 5);
-  const mediumEnergyGyms = gyms.filter(g => getGymEnergy(g.name) === 10);
-  const specialGyms25E = gyms.filter(g => getGymEnergy(g.name) === 25);
-  const specialGyms50E = gyms.filter(g => getGymEnergy(g.name) === 50);
+const GymSelector: React.FC<GymSelectorProps> = ({ selectedGym, onGymSelect, screenSize, getGymGridColumns }) => {
+  // Helper function for gym energy with fallback
+  const getGymEnergyWithFallback = (gymName: string) => {
+    try {
+      return getGymEnergy(gymName);
+    } catch {
+      return 10; // Default fallback
+    }
+  };
+
+  const GymSquare = ({ gymName, selected, onClick }: { gymName: string; selected: boolean; onClick: () => void }) => {
+    const energyCost = getGymEnergyWithFallback(gymName);
+    const [isHovered, setIsHovered] = useState(false);
+    
+    // Get gym initials from name
+    const getGymInitials = (name: string) => {
+      const words = name.split(' ').filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+      } else if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    };
+
+    // Responsive sizing
+    const buttonHeight = screenSize === 'mobile' ? '50px' : '60px';
+    const fontSize = screenSize === 'mobile' ? '12px' : '16px';
+    
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <button
+          onClick={onClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            width: '100%',
+            height: buttonHeight,
+            backgroundColor: selected ? '#4a7c59' : '#3a3a3a',
+            border: selected ? '2px solid #6b9b7a' : '1px solid #555555',
+            cursor: 'pointer',
+            fontSize: fontSize,
+            color: 'white',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            borderRadius: '4px'
+          }}
+        >
+          <div style={{
+            fontSize: screenSize === 'mobile' ? '12px' : '14px', 
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}>
+            {getGymInitials(gymName)}
+          </div>
+          <div style={{
+            position: 'absolute',
+            bottom: '1px',
+            right: '2px',
+            fontSize: '8px',
+            color: '#cccccc',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: '1px 2px',
+            borderRadius: '2px'
+          }}>
+            {energyCost}E
+          </div>
+          {selected && (
+            <div style={{
+              position: 'absolute',
+              top: '1px',
+              left: '2px',
+              fontSize: '10px',
+              color: '#4a7c59',
+              fontWeight: 'bold'
+            }}>
+              ✓
+            </div>
+          )}
+        </button>
+        {isHovered && screenSize !== 'mobile' && (
+          <div style={{
+            position: 'absolute',
+            bottom: '55px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            color: 'white',
+            padding: '6px 10px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
+            zIndex: 1000,
+            border: '1px solid #555555',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+          }}>
+            {gymName}
+            <div style={{
+              position: 'absolute',
+              bottom: '-5px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '0',
+              height: '0',
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderTop: '5px solid rgba(0, 0, 0, 0.95)'
+            }}></div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <select
-      value={selected}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full px-4 py-3 text-base font-medium bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-gray-100"
-    >
-      {/* Low Energy Gyms */}
-      <optgroup label="🟢 Low Energy (5E)" className="font-bold text-green-700 bg-green-50">
-        {lowEnergyGyms.map((gym) => {
-          const energy = getGymEnergy(gym.name);
-          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
-          return (
-            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-green-50">
-              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
-            </option>
-          );
-        })}
-      </optgroup>
-
-      {/* Medium Energy Gyms */}
-      <optgroup label="🟡 Medium Energy (10E)" className="font-bold text-yellow-700 bg-yellow-50">
-        {mediumEnergyGyms.map((gym) => {
-          const energy = getGymEnergy(gym.name);
-          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
-          return (
-            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-yellow-50">
-              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
-            </option>
-          );
-        })}
-      </optgroup>
-
-      {/* Special 25E Gyms */}
-      <optgroup label="🟠 Special (25E)" className="font-bold text-orange-700 bg-orange-50">
-        {specialGyms25E.map((gym) => {
-          const energy = getGymEnergy(gym.name);
-          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
-          return (
-            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-orange-50">
-              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
-            </option>
-          );
-        })}
-      </optgroup>
-
-      {/* Special 50E Gyms */}
-      <optgroup label="🔴 Special (50E)" className="font-bold text-red-700 bg-red-50">
-        {specialGyms50E.map((gym) => {
-          const energy = getGymEnergy(gym.name);
-          const maxDot = Math.max(gym.dots.str, gym.dots.def, gym.dots.spd, gym.dots.dex);
-          return (
-            <option key={gym.name} value={gym.name} className="py-2 px-3 text-gray-800 bg-white hover:bg-red-50">
-              {gym.name} • {energy}E • Max: {maxDot.toFixed(1)}
-            </option>
-          );
-        })}
-      </optgroup>
-    </select>
+    <div style={{
+      backgroundColor: '#333333',
+      border: '1px solid #555555',
+      padding: '12px',
+      marginBottom: '12px'
+    }}>
+      <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 12px 0'}}>
+        🏋️ Gym Selection
+      </h2>
+      
+      {/* Current Selection Display */}
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        border: '1px solid #555555',
+        padding: '8px 12px',
+        marginBottom: '12px',
+        borderRadius: '3px'
+      }}>
+        <span style={{color: '#cccccc', fontSize: '12px'}}>
+          Selected: <span style={{color: '#4a7c59', fontWeight: 'bold'}}>{selectedGym}</span>
+        </span>
+      </div>
+      
+      {/* Gym Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: getGymGridColumns(),
+        gap: '2px',
+        backgroundColor: '#2a2a2a',
+        padding: '4px',
+        border: '1px solid #555555',
+        borderRadius: '2px'
+      }}>
+        {gyms.map((gym) => (
+          <GymSquare 
+            key={gym.name}
+            gymName={gym.name}
+            selected={selectedGym === gym.name}
+            onClick={() => onGymSelect(gym.name)}
+          />
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+export default GymSelector;

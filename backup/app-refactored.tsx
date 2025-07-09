@@ -1,13 +1,13 @@
 import React from 'react';
 import { useGymCalculator } from './hooks/useGymCalculator';
 import { useResponsive } from './hooks/useResponsive';
-import StatInput from './components/StatInput';
+import StatInputOriginal from './components/StatInputOriginal';
 import TrainingSetup from './components/TrainingSetup';
-import GymSelector from './components/GymSelector';
+import GymSelectorOriginal from './components/GymSelectorOriginal';
 import EnergyAllocation from './components/EnergyAllocation';
 import PerksBonuses from './components/PerksBonuses';
 import FactionSteadfast from './components/FactionSteadfast';
-import Results from './components/Results';
+import ResultsOriginal from './components/ResultsOriginal';
 import SettingsTab from './components/SettingsTab';
 
 export default function App() {
@@ -152,7 +152,7 @@ export default function App() {
                 gridTemplateColumns: responsive.getStatGridColumns(),
                 gap: '0px'
               }}>
-                <StatInput 
+                <StatInputOriginal 
                   stats={calculator.stats}
                   onChange={calculator.setStats}
                 />
@@ -168,7 +168,7 @@ export default function App() {
             />
 
             {/* Gym Selection */}
-            <GymSelector
+            <GymSelectorOriginal
               selectedGym={calculator.selectedGym}
               onGymSelect={calculator.setSelectedGym}
               screenSize={responsive.screenSize}
@@ -238,7 +238,7 @@ export default function App() {
         )}
 
         {calculator.activeTab === 'results' && (
-          <Results
+          <ResultsOriginal
             results={calculator.results}
             selectedGym={calculator.selectedGym}
             allocationResults={calculator.allocationResults}
