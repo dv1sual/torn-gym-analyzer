@@ -16,7 +16,7 @@ export function useGymCalculator() {
   const [energy, setEnergy] = useLocalStorage('gymCalc_energy', 0);
   const [selectedGym, setSelectedGym] = useLocalStorage('gymCalc_selectedGym', gyms[0].name);
   const [results, setResults] = useLocalStorage('gymCalc_results', [] as any[]);
-  const [dynamicHappy, setDynamicHappy] = useLocalStorage('gymCalc_dynamicHappy', false);
+  const [dynamicHappy, setDynamicHappy] = useLocalStorage('gymCalc_dynamicHappy', true);
   const [darkMode, setDarkMode] = useLocalStorage('gymCalc_darkMode', true);
 
   // Energy allocation state
@@ -172,7 +172,7 @@ export function useGymCalculator() {
       setHappy(0);
       setEnergy(0);
       setSelectedGym(gyms[0].name);
-      setDynamicHappy(false);
+      setDynamicHappy(true);
       setDarkMode(true);
       setEnergyAllocation({ str: 25, def: 25, spd: 25, dex: 25 });
       setPropertyPerks(0);

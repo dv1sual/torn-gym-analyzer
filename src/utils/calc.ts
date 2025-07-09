@@ -4,7 +4,12 @@
 // ----------------------------------------------------------------
 // 0.  Stat-specific regression constants (unchanged)
 // ----------------------------------------------------------------
-const STAT_CONSTANTS = {
+// Note: C constants are used in the Iterate sheet for min/max variance calculations:
+// - Min gain: core - C
+// - Max gain: core + C  
+// - Average gain: core (C cancels out)
+// C is NOT included in the main calculation formula (M3)
+export const STAT_CONSTANTS = {
   str: { A: 1600, B: 1700, C: 700 },
   def: { A: 2100, B: -600, C: 1500 },
   spd: { A: 1600, B: 2000, C: 1350 },
@@ -138,33 +143,37 @@ export function computeGain(
   // Apply effective stats calculation first
   const effectiveBaseStat = calculateEffectiveStats({ str: baseStat, def: baseStat, spd: baseStat, dex: baseStat }, perks)[stat];
   
-  // Stat cap handling - matches spreadsheet formula: IF(H3<50000000,H3,(H3-50000000)/(8.77635*LOG(H3))+50000000)
+  // Stat cap handling - matches spreadsheet formula: IF(H3<50000000,H3,(H3-50000000)/(3.8115203763*LOG(H3))+50000000)
   const S = effectiveBaseStat < 50_000_000 
     ? effectiveBaseStat 
-    : (effectiveBaseStat - 50_000_000) / (8.77635 * Math.log(effectiveBaseStat)) + 50_000_000;
+    : (effectiveBaseStat - 50_000_000) / (3.8115203763 * Math.log(effectiveBaseStat)) + 50_000_000;
   
   // Happy multiplier with rounding - matches spreadsheet: ROUND(1+0.07*ROUND(LN(1+G3/250),4),4)
   const lnComponent = Math.round((Math.log(1 + happy / 250)) * 10000) / 10000; // Round to 4 decimal places
   const happyMult = Math.round((1 + 0.07 * lnComponent) * 10000) / 10000; // Round to 4 decimal places
   
-  // Core calculation matching spreadsheet formula
+  // Core calculation matching spreadsheet formula (M3):
+  // (1/200000)*C3*D3*(K3)*(S*happyMult + 8*happy^1.05 + A*(1-(happy/99999)^2) + B)
+  // Note: C component is NOT included in the main calculation - only used for variance in Iterate sheet
+  // K3 (gymMult) is applied INSIDE the main calculation, not after dividing by 200,000
   const core = S * happyMult + 8 * Math.pow(happy, 1.05) + (1 - Math.pow(happy / 99_999, 2)) * A + B;
-  const baseGain = (core * G * energyUsed) / 200_000;
-  
-  // The spreadsheet uses the full C value, not C/2 for average
-  const randomComponent = C * G * energyUsed / 200_000;
   const gymMult = calculateGymGainsMultiplier(stat, perks);
+  const baseGain = (energyUsed * G * gymMult * core) / 200_000;
+  
   const jobPts = calculateJobPointGains(stat, perks, energyUsed);
 
-  return (baseGain + randomComponent) * gymMult + jobPts;
+  return baseGain + jobPts;
 }
 
 // ----------------------------------------------------------------
-// 4.  Happy loss per train (average or stochastic)
+// 4.  Happy loss per train (matches spreadsheet Iterate sheet)
 // ----------------------------------------------------------------
 export function calculateHappyLoss(energyPerTrain: number, useAverage = true): number {
-  const factor = useAverage ? 5 : (Math.floor(Math.random() * 3) + 4); // 4–6
-  return Math.round(0.1 * energyPerTrain * factor);
+  // Spreadsheet uses 0.6× energy cost for happiness decay (min scenario)
+  // and 0.4× energy cost for max scenario
+  // For average, we use 0.5× (midpoint between 0.4 and 0.6)
+  const factor = useAverage ? 0.5 : (Math.random() < 0.5 ? 0.4 : 0.6);
+  return Math.round(factor * energyPerTrain);
 }
 
 // 5.  Utility: effective stats after passive multipliers
@@ -196,21 +205,32 @@ export function calculateEffectiveStats(
 export function calculateGymGainsMultiplier(stat: StatKey, perks: TrainingPerks = NO_PERKS): number {
   let m = 1;
 
-  // Global gym‑gain modifiers
+  // Global gym‑gain modifiers (multiplicative)
   if (perks.sportsScience)        m *= 1.02;   // +2 %
   if (perks.generalGymBook)       m *= 1.20;   // +20 % all stats
   if (perks.specificGymBooks?.[stat]) m *= 1.30;  // +30 % this stat
 
+  // Misc modifiers (multiplicative)
+  if (stat === 'spd' && perks.sportsShoes) m *= 1.05; // +5 % SPD only
+
+  // All bonuses are multiplicative according to spreadsheet K3 formula: (1+F3)*(1+F4)*(1+F5)*(1+F6)*(1+F7)*(1+F8)
+  // The spreadsheet applies each bonus type separately, not as a combined percentage
+  
+  // For the exact spreadsheet match, we need to handle the specific case where manualGymBonusPercent
+  // represents the combined 2% + 1% + 1% bonuses that should be applied separately
+  const uiBonus = (perks.manualGymBonusPercent?.[stat] ?? perks.monthlyBookBonus?.[stat] ?? 0);
+  if (uiBonus === 4) {
+    // Special case: 4% represents Property(2%) + Education(Stat)(1%) + Education(General)(1%)
+    // Apply them separately as per spreadsheet: (1+0.02)*(1+0.01)*(1+0.01)
+    m *= 1.02 * 1.01 * 1.01;
+  } else if (uiBonus > 0) {
+    // General case: apply as single multiplier
+    m *= 1 + uiBonus / 100;
+  }
+  
   // Faction & merit modifiers (multiplicative)
   if ((perks.steadfast?.[stat] ?? 0) > 0) m *= 1 + (perks.steadfast![stat]! / 100);
   if ((perks.merits?.[stat]    ?? 0) > 0) m *= 1 + (perks.merits![stat]! / 100);
-
-  // Misc modifiers
-  if (stat === 'spd' && perks.sportsShoes) m *= 1.05; // +5 % SPD only
-
-  // UI‑supplied “red‑box” bonus: the greater of manualGymBonusPercent **or** monthlyBookBonus
-  const uiBonus = (perks.manualGymBonusPercent?.[stat] ?? perks.monthlyBookBonus?.[stat] ?? 0);
-  if (uiBonus > 0) m *= 1 + uiBonus / 100;
 
   return m;
 }

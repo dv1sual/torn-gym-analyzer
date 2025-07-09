@@ -255,6 +255,28 @@ export default function App() {
             setDarkMode={calculator.setDarkMode}
             resetAllSettings={calculator.resetAllSettings}
             getSettingsGridColumns={responsive.getSettingsGridColumns}
+            stats={calculator.stats}
+            setStats={calculator.setStats}
+            happy={calculator.happy}
+            setHappy={calculator.setHappy}
+            energy={calculator.energy}
+            setEnergy={calculator.setEnergy}
+            selectedGym={calculator.selectedGym}
+            setSelectedGym={calculator.setSelectedGym}
+            energyAllocation={calculator.energyAllocation}
+            setEnergyAllocation={calculator.setEnergyAllocation}
+            propertyPerks={calculator.propertyPerks}
+            setPropertyPerks={calculator.setPropertyPerks}
+            educationStatSpecific={calculator.educationStatSpecific}
+            setEducationStatSpecific={calculator.setEducationStatSpecific}
+            educationGeneral={calculator.educationGeneral}
+            setEducationGeneral={calculator.setEducationGeneral}
+            jobPerks={calculator.jobPerks}
+            setJobPerks={calculator.setJobPerks}
+            bookPerks={calculator.bookPerks}
+            setBookPerks={calculator.setBookPerks}
+            steadfastBonus={calculator.steadfastBonus}
+            setSteadfastBonus={calculator.setSteadfastBonus}
           />
         )}
 
