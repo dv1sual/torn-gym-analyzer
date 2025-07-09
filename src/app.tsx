@@ -272,6 +272,7 @@ export default function App() {
 
         {calculator.activeTab === 'settings' && (
           <SettingsTab
+            notifications={notifications}
             dynamicHappy={calculator.dynamicHappy}
             setDynamicHappy={calculator.setDynamicHappy}
             darkMode={calculator.darkMode}

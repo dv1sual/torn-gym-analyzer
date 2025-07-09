@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 
+interface NotificationMethods {
+  showSuccess: (message: string, duration?: number) => void;
+  showError: (message: string, duration?: number) => void;
+  showWarning: (message: string, duration?: number) => void;
+  showInfo: (message: string, duration?: number) => void;
+}
+
 interface SettingsTabProps {
+  notifications: NotificationMethods;
   dynamicHappy: boolean;
   setDynamicHappy: (value: boolean) => void;
   darkMode: boolean;
@@ -33,6 +41,7 @@ interface SettingsTabProps {
 }
 
 const SettingsTab: React.FC<SettingsTabProps> = ({
+  notifications,
   dynamicHappy,
   setDynamicHappy,
   darkMode,
@@ -88,7 +97,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
     
     // Copy to clipboard
     navigator.clipboard.writeText(jsonString).then(() => {
-      alert('Settings exported to clipboard! You can now paste this data to share your configuration.');
+      notifications.showSuccess('Settings exported to clipboard! You can now paste this data to share your configuration.');
     }).catch(() => {
       // Fallback: show in a text area for manual copy
       const textarea = document.createElement('textarea');
@@ -97,7 +106,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      alert('Settings exported to clipboard! You can now paste this data to share your configuration.');
+      notifications.showSuccess('Settings exported to clipboard! You can now paste this data to share your configuration.');
     });
   };
 
@@ -125,11 +134,11 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
       if (typeof settingsData.dynamicHappy === 'boolean') setDynamicHappy(settingsData.dynamicHappy);
       if (typeof settingsData.darkMode === 'boolean') setDarkMode(settingsData.darkMode);
 
-      alert('Settings imported successfully!');
+      notifications.showSuccess('Settings imported successfully!');
       setImportText('');
       setShowImport(false);
     } catch (error) {
-      alert('Error importing settings: Invalid JSON format. Please check your data and try again.');
+      notifications.showError('Error importing settings: Invalid JSON format. Please check your data and try again.');
     }
   };
   return (
