@@ -79,7 +79,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({ notifications, 
       `}</style>
       <div style={{
         position: 'fixed',
-        top: '20px',
+        bottom: '20px',
         right: '20px',
         zIndex: 1000,
         maxWidth: '400px',
