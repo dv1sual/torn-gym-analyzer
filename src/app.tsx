@@ -55,6 +55,26 @@ export default function App() {
   const [showResults, setShowResults] = useState(false);
   const [activeTab, setActiveTab] = useState('calculator');
 
+  // Responsive breakpoint detection
+  const [screenSize, setScreenSize] = useState('desktop');
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      if (width < 480) {
+        setScreenSize('mobile');
+      } else if (width < 768) {
+        setScreenSize('tablet');
+      } else {
+        setScreenSize('desktop');
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('gymCalc_stats', JSON.stringify(stats));
@@ -258,6 +278,29 @@ export default function App() {
     }
   };
 
+  // Get responsive grid columns
+  const getGymGridColumns = () => {
+    if (screenSize === 'mobile') return 'repeat(4, 1fr)';
+    if (screenSize === 'tablet') return 'repeat(8, 1fr)';
+    return 'repeat(16, 1fr)';
+  };
+
+  const getStatGridColumns = () => {
+    if (screenSize === 'mobile') return 'repeat(2, 1fr)';
+    return 'repeat(4, 1fr)';
+  };
+
+  const getPerksGridColumns = () => {
+    if (screenSize === 'mobile') return 'repeat(2, 1fr)';
+    if (screenSize === 'tablet') return 'repeat(3, 1fr)';
+    return 'repeat(5, 1fr)';
+  };
+
+  const getSettingsGridColumns = () => {
+    if (screenSize === 'mobile') return 'repeat(1, 1fr)';
+    return 'repeat(3, 1fr)';
+  };
+
   const StatInput = ({ label, value, onChange, color }: { label: string; value: number; onChange: (val: number) => void; color: string }) => (
     <div style={{
       backgroundColor: '#2a2a2a',
@@ -331,6 +374,10 @@ export default function App() {
       }
       return name.substring(0, 2).toUpperCase();
     };
+
+    // Responsive sizing
+    const buttonHeight = screenSize === 'mobile' ? '50px' : '60px';
+    const fontSize = screenSize === 'mobile' ? '12px' : '16px';
     
     return (
       <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -340,11 +387,11 @@ export default function App() {
           onMouseLeave={() => setIsHovered(false)}
           style={{
             width: '100%',
-            height: '60px',
+            height: buttonHeight,
             backgroundColor: selected ? '#4a7c59' : '#3a3a3a',
             border: selected ? '2px solid #6b9b7a' : '1px solid #555555',
             cursor: 'pointer',
-            fontSize: '16px',
+            fontSize: fontSize,
             color: 'white',
             position: 'relative',
             display: 'flex',
@@ -355,7 +402,7 @@ export default function App() {
           }}
         >
           <div style={{
-            fontSize: '14px', 
+            fontSize: screenSize === 'mobile' ? '12px' : '14px', 
             fontWeight: 'bold',
             textAlign: 'center'
           }}>
@@ -386,7 +433,7 @@ export default function App() {
             </div>
           )}
         </button>
-        {isHovered && (
+        {isHovered && screenSize !== 'mobile' && (
           <div style={{
             position: 'absolute',
             bottom: '55px',
@@ -435,7 +482,7 @@ export default function App() {
         width: '100%',
         maxWidth: '900px',
         backgroundColor: '#191919',
-        padding: '20px 0'
+        padding: screenSize === 'mobile' ? '10px' : '20px 0'
       }}>
       {/* Header */}
       <div style={{
@@ -445,7 +492,13 @@ export default function App() {
         padding: '8px 12px',
         marginBottom: '12px'
       }}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+        <div style={{
+          display: 'flex', 
+          flexDirection: screenSize === 'mobile' ? 'column' : 'row',
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          gap: screenSize === 'mobile' ? '8px' : '0px'
+        }}>
           <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
             <div style={{
               width: '100px',
@@ -480,7 +533,7 @@ export default function App() {
               Gym Stats Calculator
             </h1>
           </div>
-          <div style={{display: 'flex', gap: '8px'}}>
+          <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
             <button 
               onClick={() => setActiveTab('calculator')}
               style={{
@@ -551,7 +604,7 @@ export default function App() {
             </h2>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: getStatGridColumns(),
               gap: '0px'
             }}>
               <StatInput 
@@ -675,10 +728,10 @@ export default function App() {
               </span>
             </div>
             
-            {/* Gym Grid - Full width with proper spacing */}
+            {/* Gym Grid */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(16, 1fr)',
+              gridTemplateColumns: getGymGridColumns(),
               gap: '2px',
               backgroundColor: '#2a2a2a',
               padding: '4px',
@@ -706,7 +759,7 @@ export default function App() {
             <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
               ⚖️ Energy Allocation
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '8px'}}>
+            <div style={{display: 'grid', gridTemplateColumns: getStatGridColumns(), gap: '12px', marginBottom: '8px'}}>
               {(['str', 'def', 'spd', 'dex'] as const).map((stat) => (
                 <div key={stat}>
                   <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
@@ -756,7 +809,7 @@ export default function App() {
             <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
               📈 Perks Bonuses
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '8px'}}>
+            <div style={{display: 'grid', gridTemplateColumns: getPerksGridColumns(), gap: '12px', marginBottom: '8px'}}>
               <div>
                 <label style={{color: 'white', fontSize: '11px', display: 'block', marginBottom: '4px'}}>
                   Property Perks (%)
@@ -862,7 +915,7 @@ export default function App() {
             <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
               🏛️ Faction Steadfast
             </h2>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '8px'}}>
+            <div style={{display: 'grid', gridTemplateColumns: getStatGridColumns(), gap: '12px', marginBottom: '8px'}}>
               {(['str', 'def', 'spd', 'dex'] as const).map((stat) => (
                 <div key={stat}>
                   <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
@@ -955,7 +1008,7 @@ export default function App() {
                   <h3 style={{color: '#88cc88', fontSize: '13px', margin: '0 0 8px 0'}}>
                     ⚖️ Energy Allocation Results - {selectedGym}
                   </h3>
-                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '12px'}}>
+                  <div style={{display: 'grid', gridTemplateColumns: getStatGridColumns(), gap: '8px', marginBottom: '12px'}}>
                     {(['str', 'def', 'spd', 'dex'] as const).map((stat) => (
                       <div key={stat} style={{
                         backgroundColor: '#333333',
@@ -1022,7 +1075,7 @@ export default function App() {
           <h2 style={{color: '#88cc88', fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
             ⚙️ Settings
           </h2>
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'}}>
+          <div style={{display: 'grid', gridTemplateColumns: getSettingsGridColumns(), gap: '12px'}}>
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <span style={{color: '#cccccc', fontSize: '12px'}}>Dynamic Happy Loss</span>
               <button
