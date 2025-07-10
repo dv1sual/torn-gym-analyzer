@@ -12,6 +12,7 @@ import SettingsTab from './components/SettingsTab';
 import Tooltip from './components/Tooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import NotificationSystem, { useNotifications } from './components/NotificationSystem';
+import AutoFillSection from './components/api/AutoFillSection';
 
 export default function App() {
   const calculator = useGymCalculator();
@@ -141,6 +142,20 @@ export default function App() {
 
         {calculator.activeTab === 'calculator' && (
           <>
+            {/* API Auto-Fill Section */}
+            <AutoFillSection
+              setStats={calculator.setStats}
+              setHappy={calculator.setHappy}
+              setEnergy={calculator.setEnergy}
+              setPropertyPerks={calculator.setPropertyPerks}
+              setEducationStatSpecific={calculator.setEducationStatSpecific}
+              setEducationGeneral={calculator.setEducationGeneral}
+              setJobPerks={calculator.setJobPerks}
+              setBookPerks={calculator.setBookPerks}
+              setSteadfastBonus={calculator.setSteadfastBonus}
+              notifications={notifications}
+            />
+
             {/* Current Stats */}
             <div style={{
               backgroundColor: '#2a2a2a',
