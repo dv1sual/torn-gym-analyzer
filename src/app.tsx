@@ -179,9 +179,26 @@ function AppContent() {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div style={{color: '#cccccc'}}>
-            Training Prediction using <span style={{color: '#88cc88', fontWeight: 'bold'}}>Vladar Formula</span>
-          </div>
+          {apiContext.userStats ? (
+            /* ---------- after first Auto-Fill ---------- */
+            <div style={{ color: '#ccc' }}>
+              <strong>{apiContext.userStats.name as string}</strong>
+              {' · '}
+              {apiContext.userStats.rank as string}
+              {' · '}
+              {(apiContext.userStats.faction as any).position}
+              {' of '}
+              {(apiContext.userStats.faction as any).faction_name}
+            </div>
+          ) : (
+            /* ---------- before connection ---------- */
+            <div style={{ color: '#ccc' }}>
+              Training Prediction using&nbsp;
+              <span style={{ color: '#88cc88', fontWeight: 'bold' }}>
+                Vladar Formula
+              </span>
+            </div>
+          )}
           {calculator.activeTab === 'calculator' && apiContext.isConnected && (
             <Tooltip content="Auto-fill stats and perks from Torn API" position="top" maxWidth="300px">
               <button
