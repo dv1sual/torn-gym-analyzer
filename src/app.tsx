@@ -14,6 +14,8 @@ import Tooltip from './components/Tooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import NotificationSystem, { useNotifications } from './components/NotificationSystem';
 import { useApiContext } from './hooks/useApiContext';
+import tornLogo from './assets/torn_logo.webp';
+
 
 function AppContent() {
   const calculator = useGymCalculator();
@@ -52,35 +54,19 @@ function AppContent() {
             gap: responsive.screenSize === 'mobile' ? '8px' : '0px'
           }}>
             <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-              <div style={{
-                width: '100px',
-                height: '40px',
-                background: 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 50%, #1a1a1a 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#888888',
-                fontWeight: 'bold',
-                fontSize: '18px',
-                border: '1px solid #333333',
-                borderRadius: '2px',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.5)',
-                letterSpacing: '2px',
-                textShadow: '0 1px 0 rgba(0,0,0,0.8), 0 -1px 0 rgba(255,255,255,0.1)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%)',
-                  pointerEvents: 'none'
-                }}></div>
-                TORN
-              </div>
+              <img
+                src={tornLogo}
+                alt="Torn logo"
+                style={{
+                  width: 'auto',
+                  height: 40,
+                  objectFit: 'contain',
+                  border: '1px solid #333',
+                  borderRadius: 2,
+                  boxShadow:
+                    'inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.5)',
+                }}
+              />
               <h1 style={{color: 'white', fontSize: '16px', fontWeight: 'bold', margin: 0}}>
                 Gym Stats Calculator
               </h1>
@@ -180,24 +166,21 @@ function AppContent() {
           alignItems: 'center'
         }}>
           {apiContext.userStats ? (
-            /* ---------- after first Auto-Fill ---------- */
-            <div style={{ color: '#ccc' }}>
-              <strong>{apiContext.userStats.name as string}</strong>
+            <strong style={{ color: '#ccc' /* ← full line in bold */ }}>
+              {apiContext.userStats.name as string}
               {' · '}
               {apiContext.userStats.rank as string}
               {' · '}
-              {(apiContext.userStats.faction as any).position}
-              {' of '}
+              {(apiContext.userStats.faction as any).position} of&nbsp;
               {(apiContext.userStats.faction as any).faction_name}
-            </div>
+            </strong>
           ) : (
-            /* ---------- before connection ---------- */
-            <div style={{ color: '#ccc' }}>
+            <span style={{ color: '#ccc' }}>
               Training Prediction using&nbsp;
               <span style={{ color: '#88cc88', fontWeight: 'bold' }}>
                 Vladar Formula
               </span>
-            </div>
+            </span>
           )}
           {calculator.activeTab === 'calculator' && apiContext.isConnected && (
             <Tooltip content="Auto-fill stats and perks from Torn API" position="top" maxWidth="300px">
