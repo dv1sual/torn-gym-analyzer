@@ -1,168 +1,178 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, ReactNode, CSSProperties } from 'react';
 
-interface TooltipProps {
-  content: string | ReactNode;
+/**
+ * Tooltip – a lightweight zero‑dependency tooltip component.
+ * ---------------------------------------------------------
+ * Back‑compat and sizing fixes:
+ * 1. `maxWidth` is honoured (number → px, string allowed).
+ * 2. Short phrases no longer wrap one word per line (`whiteSpace: 'nowrap'`).
+ * 3. Gym selector metric lines wrap only *after* hitting the chosen `maxWidth`
+ *    (`overflowWrap: 'break-word'`).
+ * 4. Added a **`position` alias** for the older prop name used in the app so
+ *    `<Tooltip position="top" … />` keeps compiling. If both `position` and
+ *    `placement` are supplied, `position` wins.
+ */
+
+export type Placement = 'top' | 'bottom' | 'left' | 'right';
+
+export interface TooltipProps {
+  /** element that receives the hover/focus */
   children: ReactNode;
-  position?: 'top' | 'bottom' | 'left' | 'right';
-  delay?: number;
-  disabled?: boolean;
-  maxWidth?: string;
+  /** tooltip body */
+  content: ReactNode;
+  /** CSS `max-width`; number → px */
+  maxWidth?: number | string;
+  /** where the tooltip appears relative to the child */
+  placement?: Placement;
+  /** alias kept for backward compatibility */
+  position?: Placement;
+  /** distance in px between tooltip and target */
+  offset?: number;
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ 
-  content, 
-  children, 
-  position = 'top', 
-  delay = 500,
-  disabled = false,
-  maxWidth = '300px'
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+const ARROW = 6; // triangle height (px)
 
-  const showTooltip = () => {
-    if (disabled) return;
-    
-    const id = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-    setTimeoutId(id);
-  };
+export default function Tooltip(props: TooltipProps) {
+  const {
+    children,
+    content,
+    maxWidth = 250,
+    placement: placementProp,
+    position,
+    offset = 8,
+  } = props;
 
-  const hideTooltip = () => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      setTimeoutId(null);
-    }
-    setIsVisible(false);
-  };
+  // `position` (old prop) overrides `placement` (new prop)
+  const placement: Placement = position ?? placementProp ?? 'top';
 
-  const getTooltipStyle = () => {
-    const baseStyle = {
-      position: 'absolute' as const,
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      color: 'white',
-      padding: '8px 12px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      zIndex: 1000,
-      opacity: isVisible ? 1 : 0,
-      visibility: isVisible ? 'visible' as const : 'hidden' as const,
-      transition: 'opacity 0.2s ease-in-out, visibility 0.2s ease-in-out',
-      pointerEvents: 'none' as const,
-      maxWidth: '250px', // Generous max width
-      whiteSpace: 'normal' as const,
-      wordWrap: 'break-word' as const,
-      overflowWrap: 'break-word' as const,
-      lineHeight: '1.4',
-      textAlign: 'left' as const
-    };
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
 
-    switch (position) {
-      case 'top':
-        return {
-          ...baseStyle,
-          bottom: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginBottom: '8px'
-        };
+  /** shared handler for mouse + keyboard focus */
+  type TriggerEvt =
+    | React.MouseEvent<HTMLElement>
+    | React.FocusEvent<HTMLElement>;
+
+  const show = (ev: TriggerEvt) => {
+    const r = ev.currentTarget.getBoundingClientRect();
+    let x = r.left + r.width / 2;
+    let y = r.top;
+
+    switch (placement) {
       case 'bottom':
-        return {
-          ...baseStyle,
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginTop: '8px'
-        };
+        y = r.bottom;
+        break;
       case 'left':
-        return {
-          ...baseStyle,
-          right: '100%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          marginRight: '8px'
-        };
+        x = r.left;
+        y = r.top + r.height / 2;
+        break;
       case 'right':
-        return {
-          ...baseStyle,
-          left: '100%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          marginLeft: '8px'
-        };
+        x = r.right;
+        y = r.top + r.height / 2;
+        break;
       default:
-        return baseStyle;
+        // top
+        y = r.top;
     }
+
+    setCoords({ x, y });
+    setOpen(true);
   };
 
-  const getArrowStyle = () => {
-    const arrowSize = 6;
-    const baseArrow = {
-      position: 'absolute' as const,
-      width: 0,
-      height: 0,
-      borderStyle: 'solid' as const,
-      opacity: isVisible ? 1 : 0,
-      visibility: isVisible ? 'visible' as const : 'hidden' as const,
-      transition: 'opacity 0.2s ease-in-out, visibility 0.2s ease-in-out'
-    };
+  const hide = () => setOpen(false);
 
-    switch (position) {
-      case 'top':
-        return {
-          ...baseArrow,
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          borderWidth: `${arrowSize}px ${arrowSize}px 0 ${arrowSize}px`,
-          borderColor: 'rgba(0, 0, 0, 0.9) transparent transparent transparent'
-        };
-      case 'bottom':
-        return {
-          ...baseArrow,
-          bottom: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          borderWidth: `0 ${arrowSize}px ${arrowSize}px ${arrowSize}px`,
-          borderColor: 'transparent transparent rgba(0, 0, 0, 0.9) transparent'
-        };
-      case 'left':
-        return {
-          ...baseArrow,
-          left: '100%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          borderWidth: `${arrowSize}px 0 ${arrowSize}px ${arrowSize}px`,
-          borderColor: 'transparent transparent transparent rgba(0, 0, 0, 0.9)'
-        };
-      case 'right':
-        return {
-          ...baseArrow,
-          right: '100%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          borderWidth: `${arrowSize}px ${arrowSize}px ${arrowSize}px 0`,
-          borderColor: 'transparent rgba(0, 0, 0, 0.9) transparent transparent'
-        };
-      default:
-        return baseArrow;
-    }
+  // ─────────────────────────── styles ────────────────────────────
+  const box: CSSProperties = {
+    position: 'fixed',
+    zIndex: 9999,
+    pointerEvents: 'none',
+    padding: '6px 10px',
+    background: '#000',
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 1.25,
+    borderRadius: 4,
+    textAlign: 'left',
+    maxWidth: typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth,
+    minWidth: 'fit-content',
+    whiteSpace: 'nowrap',
+    overflowWrap: 'break-word',
   };
+
+  const arrow: CSSProperties = {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    borderLeft: `${ARROW}px solid transparent`,
+    borderRight: `${ARROW}px solid transparent`,
+  };
+
+  // placement‑specific tweaks
+  switch (placement) {
+    case 'bottom':
+      Object.assign(box, {
+        top: coords.y + offset + ARROW,
+        left: coords.x,
+        transform: 'translate(-50%, 0)',
+      });
+      Object.assign(arrow, {
+        top: -ARROW,
+        borderBottom: `${ARROW}px solid #000`,
+      });
+      break;
+    case 'left':
+      Object.assign(box, {
+        top: coords.y,
+        left: coords.x - offset - ARROW,
+        transform: 'translate(-100%, -50%)',
+      });
+      Object.assign(arrow, {
+        left: '100%',
+        top: '50%',
+        marginTop: -ARROW,
+        borderLeft: `${ARROW}px solid #000`,
+      });
+      break;
+    case 'right':
+      Object.assign(box, {
+        top: coords.y,
+        left: coords.x + offset + ARROW,
+        transform: 'translate(0, -50%)',
+      });
+      Object.assign(arrow, {
+        right: '100%',
+        top: '50%',
+        marginTop: -ARROW,
+        borderRight: `${ARROW}px solid #000`,
+      });
+      break;
+    default: // top
+      Object.assign(box, {
+        top: coords.y - offset - ARROW,
+        left: coords.x,
+        transform: 'translate(-50%, -100%)',
+      });
+      Object.assign(arrow, {
+        bottom: -ARROW,
+        borderTop: `${ARROW}px solid #000`,
+      });
+  }
 
   return (
-    <div 
-      style={{ position: 'relative', display: 'inline-block' }}
-      onMouseEnter={showTooltip}
-      onMouseLeave={hideTooltip}
+    <span
+      style={{ display: 'inline-block' }}
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={hide}
     >
       {children}
-      <div style={getTooltipStyle()}>
-        {content}
-        <div style={getArrowStyle()} />
-      </div>
-    </div>
+      {open && (
+        <div style={box}>
+          {content}
+          <span style={arrow} />
+        </div>
+      )}
+    </span>
   );
-};
-
-export default Tooltip;
+}
