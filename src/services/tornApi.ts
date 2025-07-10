@@ -72,7 +72,7 @@ class TornApiService {
             );
           }
 
-          const url = `${this.config.baseUrl}/${endpoint}&key=${this.config.apiKey}`;
+          const url = `${this.config.baseUrl}/${endpoint}${endpoint.includes('?') ? '&' : '?'}key=${this.config.apiKey}`;
           
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);

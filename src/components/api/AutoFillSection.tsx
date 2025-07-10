@@ -130,21 +130,36 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
       ]);
 
       if (statsResponse.success && statsResponse.data) {
-        const userData = statsResponse.data as TornUser;
+        const userData = statsResponse.data as any; // Use any to handle flexible API response
         
-        // Update stats
-        setStats({
-          str: userData.strength,
-          def: userData.defense,
-          spd: userData.speed,
-          dex: userData.dexterity
-        });
+        console.log('API Response:', userData); // Debug log
+        
+        // Update stats - handle different possible response structures
+        const strength = userData.strength || userData.battlestats?.strength || 0;
+        const defense = userData.defense || userData.battlestats?.defense || 0;
+        const speed = userData.speed || userData.battlestats?.speed || 0;
+        const dexterity = userData.dexterity || userData.battlestats?.dexterity || 0;
+        
+        if (strength || defense || speed || dexterity) {
+          setStats({
+            str: strength,
+            def: defense,
+            spd: speed,
+            dex: dexterity
+          });
+          notifications.showSuccess('Stats updated successfully!');
+        }
 
-        // Update happy and energy
-        setHappy(userData.happy.current);
-        setEnergy(userData.energy.current);
-
-        notifications.showSuccess('Stats updated successfully!');
+        // Update happy and energy - handle different possible structures
+        const currentHappy = userData.happy?.current || userData.happy || 0;
+        const currentEnergy = userData.energy?.current || userData.energy || 0;
+        
+        if (currentHappy) setHappy(currentHappy);
+        if (currentEnergy) setEnergy(currentEnergy);
+        
+        if (currentHappy || currentEnergy) {
+          notifications.showInfo(`Updated: Happy ${currentHappy}, Energy ${currentEnergy}`);
+        }
       }
 
       if (perksResponse.success && perksResponse.data) {
