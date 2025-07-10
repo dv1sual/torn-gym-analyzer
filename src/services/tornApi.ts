@@ -244,30 +244,39 @@ export const detectJobPerks = (jobPerks: any[]): number => {
   }, 0);
 };
 
-export const detectFactionSteadfast = (factionPerks: any[]): { str: number; def: number; spd: number; dex: number } => {
-  if (!Array.isArray(factionPerks)) return { str: 0, def: 0, spd: 0, dex: 0 };
-  
-  const steadfast = { str: 0, def: 0, spd: 0, dex: 0 };
-  
-  factionPerks.forEach(perk => {
-    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
-    
-    if (perkName.includes('Steadfast')) {
-      // Extract percentage from perk name/description
-      const match = perkName.match(/(\d+)%/);
-      const percentage = match ? parseInt(match[1]) : 0;
-      
-      if (perkName.includes('Strength') || perkName.includes('STR')) {
-        steadfast.str = percentage;
-      } else if (perkName.includes('Defense') || perkName.includes('DEF')) {
-        steadfast.def = percentage;
-      } else if (perkName.includes('Speed') || perkName.includes('SPD')) {
-        steadfast.spd = percentage;
-      } else if (perkName.includes('Dexterity') || perkName.includes('DEX')) {
-        steadfast.dex = percentage;
-      }
+export const detectFactionSteadfast = (
+  factionPerks: any[]
+): { str: number; def: number; spd: number; dex: number } => {
+  const result = { str: 0, def: 0, spd: 0, dex: 0 };
+  if (!Array.isArray(factionPerks)) return result;
+
+  const re = /(\d+)%\s+(\w+)\s+gym gains/i;
+
+  factionPerks.forEach(raw => {
+    const perk = typeof raw === 'string' ? raw : raw?.name || '';
+    const match = perk.match(re);
+    if (!match) return;
+
+    const [, pct, stat] = match;
+    switch (stat.toLowerCase()) {
+      case 'strength':
+      case 'str':
+        result.str = Number(pct);
+        break;
+      case 'defense':
+      case 'def':
+        result.def = Number(pct);
+        break;
+      case 'speed':
+      case 'spd':
+        result.spd = Number(pct);
+        break;
+      case 'dexterity':
+      case 'dex':
+        result.dex = Number(pct);
+        break;
     }
   });
-  
-  return steadfast;
+
+  return result;
 };
