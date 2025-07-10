@@ -182,7 +182,7 @@ function AppContent() {
           <div style={{color: '#cccccc'}}>
             Training Prediction using <span style={{color: '#88cc88', fontWeight: 'bold'}}>Vladar Formula</span>
           </div>
-          {apiContext.isConnected && (
+          {calculator.activeTab === 'calculator' && apiContext.isConnected && (
             <Tooltip content="Auto-fill stats and perks from Torn API" position="top" maxWidth="300px">
               <button
                 onClick={() => apiContext.fetchUserData(
