@@ -137,16 +137,13 @@ class TornApiService {
   }
 
   async getUserStats(): Promise<ApiResponse<TornUser>> {
-    // Use only profile which works with Public permissions
-    return this.makeRequest('user/?selections=profile');
+    // Request profile, battlestats, and bars (energy/happy) data
+    return this.makeRequest('user/?selections=profile,battlestats,bars');
   }
 
   async getUserPerks(): Promise<ApiResponse<TornPerks>> {
-    // Perks require higher permissions, so we'll skip this for now
-    return Promise.resolve({
-      success: false,
-      error: 'Perks require higher API permissions than Public'
-    });
+    // Request perks data
+    return this.makeRequest('user/?selections=perks');
   }
 
   async getFactionInfo(): Promise<ApiResponse<{ faction_id: number; name: string }>> {

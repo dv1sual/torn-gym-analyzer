@@ -145,27 +145,31 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
         console.log('🔍 Full API Response Data:', userData); // Debug log
         console.log('🔍 Response Keys:', Object.keys(userData)); // Debug log
         
-        // Basic profile only has limited data - let's see what's available
-        console.log('💪 Available profile fields:', Object.keys(userData)); // Debug log
+        // Extract data from the API response
+        console.log('💪 Available API fields:', Object.keys(userData)); // Debug log
         
-        // Try to extract any available stats from profile
-        const strength = userData.strength || 0;
-        const defense = userData.defense || 0; 
-        const speed = userData.speed || 0;
-        const dexterity = userData.dexterity || 0;
+        // Extract battle stats from the battlestats object
+        const battlestats = userData.battlestats || {};
+        const strength = battlestats.strength || 0;
+        const defense = battlestats.defense || 0; 
+        const speed = battlestats.speed || 0;
+        const dexterity = battlestats.dexterity || 0;
         
-        console.log('💪 Extracted Stats:', { strength, defense, speed, dexterity }); // Debug log
+        console.log('💪 Extracted Battle Stats:', { strength, defense, speed, dexterity }); // Debug log
         
-        // For now, let's just show what data we can get from basic profile
+        // Extract happy and energy from bars object
+        const bars = userData.bars || {};
+        const currentHappy = bars.happy?.current || 0;
+        const currentEnergy = bars.energy?.current || 0;
+        
+        console.log('😊 Extracted Bars:', { currentHappy, currentEnergy }); // Debug log
+        
+        // Show profile info
         if (userData.name) {
           notifications.showInfo(`Profile loaded for ${userData.name} (Level ${userData.level || 'Unknown'})`);
         }
         
-        // Basic profile doesn't include battle stats, happy, or energy with Public permissions
-        // We'll need to inform the user about this limitation
-        notifications.showWarning('Basic profile loaded. Battle stats, happy, and energy require higher API permissions than "Public".');
-        
-        // If we somehow got stats, update them
+        // Update stats if available
         if (strength || defense || speed || dexterity) {
           setStats({
             str: strength,
@@ -173,7 +177,18 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
             spd: speed,
             dex: dexterity
           });
-          notifications.showSuccess(`Stats updated: STR ${strength}, DEF ${defense}, SPD ${speed}, DEX ${dexterity}`);
+          notifications.showSuccess(`Stats updated: STR ${strength.toLocaleString()}, DEF ${defense.toLocaleString()}, SPD ${speed.toLocaleString()}, DEX ${dexterity.toLocaleString()}`);
+        } else {
+          notifications.showWarning('No battle stats found. Make sure your API key has sufficient permissions.');
+        }
+        
+        // Update happy and energy if available
+        if (currentHappy || currentEnergy) {
+          if (currentHappy) setHappy(currentHappy);
+          if (currentEnergy) setEnergy(currentEnergy);
+          notifications.showSuccess(`Updated: Happy ${currentHappy}, Energy ${currentEnergy}`);
+        } else {
+          notifications.showWarning('No happy/energy data found. Make sure your API key has sufficient permissions.');
         }
       } else {
         console.log('❌ Stats API call failed:', statsResponse.error); // Debug log
