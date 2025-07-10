@@ -6,6 +6,7 @@ import TornApiService, {
   detectPropertyPerks,
   detectEducationPerks,
   detectJobPerks,
+  detectFactionSteadfast,
   TornUser,
   TornPerks
 } from '../../services/tornApi';
@@ -148,19 +149,17 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
         // Extract data from the API response
         console.log('💪 Available API fields:', Object.keys(userData)); // Debug log
         
-        // Extract battle stats from the battlestats object
-        const battlestats = userData.battlestats || {};
-        const strength = battlestats.strength || 0;
-        const defense = battlestats.defense || 0; 
-        const speed = battlestats.speed || 0;
-        const dexterity = battlestats.dexterity || 0;
+        // Extract battle stats directly from the response (they're in the root object)
+        const strength = userData.strength || 0;
+        const defense = userData.defense || 0; 
+        const speed = userData.speed || 0;
+        const dexterity = userData.dexterity || 0;
         
         console.log('💪 Extracted Battle Stats:', { strength, defense, speed, dexterity }); // Debug log
         
-        // Extract happy and energy from bars object
-        const bars = userData.bars || {};
-        const currentHappy = bars.happy?.current || 0;
-        const currentEnergy = bars.energy?.current || 0;
+        // Extract happy and energy directly from the response
+        const currentHappy = userData.happy?.current || userData.happy || 0;
+        const currentEnergy = userData.energy?.current || userData.energy || 0;
         
         console.log('😊 Extracted Bars:', { currentHappy, currentEnergy }); // Debug log
         
@@ -203,15 +202,26 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
         const propertyBonus = detectPropertyPerks(perksData.property_perks || []);
         const educationBonus = detectEducationPerks(perksData.education_perks || []);
         const jobBonus = detectJobPerks(perksData.job_perks || []);
+        const factionSteadfast = detectFactionSteadfast(perksData.faction_perks || []);
 
-        console.log('🏠 Detected Perks:', { propertyBonus, educationBonus, jobBonus }); // Debug log
+        console.log('🏠 Detected Perks:', { propertyBonus, educationBonus, jobBonus, factionSteadfast }); // Debug log
 
+        // Update all detected perks
         setPropertyPerks(propertyBonus);
         setEducationGeneral(educationBonus.general);
         setEducationStatSpecific(educationBonus.specific);
         setJobPerks(jobBonus);
+        setSteadfastBonus(factionSteadfast);
 
-        notifications.showInfo(`Auto-detected perks: Property +${propertyBonus}%, Education +${educationBonus.general + educationBonus.specific}%, Job +${jobBonus}%`);
+        // Show comprehensive perk detection results
+        const totalEducation = educationBonus.general + educationBonus.specific;
+        const totalSteadfast = factionSteadfast.str + factionSteadfast.def + factionSteadfast.spd + factionSteadfast.dex;
+        
+        if (propertyBonus || totalEducation || jobBonus || totalSteadfast) {
+          notifications.showSuccess(`Auto-detected perks: Property +${propertyBonus}%, Education +${totalEducation}%, Job +${jobBonus}%, Steadfast +${totalSteadfast}%`);
+        } else {
+          notifications.showInfo('No gym-related perks detected in your account.');
+        }
       } else {
         console.log('❌ Perks API call failed:', perksResponse.error); // Debug log
         notifications.showWarning(`Perks API failed: ${perksResponse.error || 'Unknown error'}`);

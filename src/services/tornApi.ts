@@ -188,30 +188,86 @@ export const decodeApiKey = (encodedKey: string): string => {
 };
 
 // Perk detection utilities
-export const detectPropertyPerks = (propertyPerks: string[]): number => {
+export const detectPropertyPerks = (propertyPerks: any[]): number => {
+  if (!Array.isArray(propertyPerks)) return 0;
+  
   const perkValues: Record<string, number> = {
     'Pool': 5,
     'Sauna': 5,
     'Hot Tub': 2.5,
     'Gym': 5,
     'Shooting Range': 5,
+    'Private Gym': 10,
+    'Private Pool': 5,
+    'Private Sauna': 5,
     // Add more property perks as needed
   };
 
-  return propertyPerks.reduce((total, perk) => total + (perkValues[perk] || 0), 0);
+  return propertyPerks.reduce((total, perk) => {
+    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
+    return total + (perkValues[perkName] || 0);
+  }, 0);
 };
 
-export const detectEducationPerks = (educationPerks: string[]): { general: number; specific: number } => {
-  const generalPerks = ['Sports Science', 'Advanced Sports Science'];
+export const detectEducationPerks = (educationPerks: any[]): { general: number; specific: number } => {
+  if (!Array.isArray(educationPerks)) return { general: 0, specific: 0 };
+  
+  const generalPerks = ['Sports Science', 'Advanced Sports Science', 'Fitness'];
   const specificPerks = ['Strength Training', 'Defense Training', 'Speed Training', 'Dexterity Training'];
 
-  const general = educationPerks.filter(perk => generalPerks.includes(perk)).length * 5;
-  const specific = educationPerks.filter(perk => specificPerks.includes(perk)).length * 10;
+  let general = 0;
+  let specific = 0;
+
+  educationPerks.forEach(perk => {
+    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
+    
+    if (generalPerks.some(gp => perkName.includes(gp))) {
+      general += 5;
+    }
+    if (specificPerks.some(sp => perkName.includes(sp))) {
+      specific += 10;
+    }
+  });
 
   return { general, specific };
 };
 
-export const detectJobPerks = (jobPerks: string[]): number => {
-  const gymRelatedPerks = ['Gym Guru', 'Fitness Instructor', 'Personal Trainer'];
-  return jobPerks.filter(perk => gymRelatedPerks.includes(perk)).length * 5;
+export const detectJobPerks = (jobPerks: any[]): number => {
+  if (!Array.isArray(jobPerks)) return 0;
+  
+  const gymRelatedPerks = ['Gym Guru', 'Fitness Instructor', 'Personal Trainer', 'Gym'];
+  
+  return jobPerks.reduce((total, perk) => {
+    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
+    const isGymRelated = gymRelatedPerks.some(gp => perkName.includes(gp));
+    return total + (isGymRelated ? 5 : 0);
+  }, 0);
+};
+
+export const detectFactionSteadfast = (factionPerks: any[]): { str: number; def: number; spd: number; dex: number } => {
+  if (!Array.isArray(factionPerks)) return { str: 0, def: 0, spd: 0, dex: 0 };
+  
+  const steadfast = { str: 0, def: 0, spd: 0, dex: 0 };
+  
+  factionPerks.forEach(perk => {
+    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
+    
+    if (perkName.includes('Steadfast')) {
+      // Extract percentage from perk name/description
+      const match = perkName.match(/(\d+)%/);
+      const percentage = match ? parseInt(match[1]) : 0;
+      
+      if (perkName.includes('Strength') || perkName.includes('STR')) {
+        steadfast.str = percentage;
+      } else if (perkName.includes('Defense') || perkName.includes('DEF')) {
+        steadfast.def = percentage;
+      } else if (perkName.includes('Speed') || perkName.includes('SPD')) {
+        steadfast.spd = percentage;
+      } else if (perkName.includes('Dexterity') || perkName.includes('DEX')) {
+        steadfast.dex = percentage;
+      }
+    }
+  });
+  
+  return steadfast;
 };
