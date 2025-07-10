@@ -116,30 +116,56 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
   };
 
   const fetchUserData = async () => {
+    console.log('🔄 Auto-fill button clicked!'); // Debug log
+    
     if (!apiService || !isConnected) {
+      console.log('❌ Not connected or no API service'); // Debug log
       notifications.showError('Please connect to the API first');
       return;
     }
 
+    console.log('✅ Starting API fetch...'); // Debug log
     setIsLoading(true);
+    
     try {
+      console.log('📡 Making API calls...'); // Debug log
+      
       // Fetch user stats and perks in parallel
       const [statsResponse, perksResponse] = await Promise.all([
         apiService.getUserStats(),
         apiService.getUserPerks()
       ]);
 
+      console.log('📊 Stats Response:', statsResponse); // Debug log
+      console.log('🎯 Perks Response:', perksResponse); // Debug log
+
       if (statsResponse.success && statsResponse.data) {
         const userData = statsResponse.data as any; // Use any to handle flexible API response
         
-        console.log('API Response:', userData); // Debug log
+        console.log('🔍 Full API Response Data:', userData); // Debug log
+        console.log('🔍 Response Keys:', Object.keys(userData)); // Debug log
         
-        // Update stats - handle different possible response structures
-        const strength = userData.strength || userData.battlestats?.strength || 0;
-        const defense = userData.defense || userData.battlestats?.defense || 0;
-        const speed = userData.speed || userData.battlestats?.speed || 0;
-        const dexterity = userData.dexterity || userData.battlestats?.dexterity || 0;
+        // Basic profile only has limited data - let's see what's available
+        console.log('💪 Available profile fields:', Object.keys(userData)); // Debug log
         
+        // Try to extract any available stats from profile
+        const strength = userData.strength || 0;
+        const defense = userData.defense || 0; 
+        const speed = userData.speed || 0;
+        const dexterity = userData.dexterity || 0;
+        
+        console.log('💪 Extracted Stats:', { strength, defense, speed, dexterity }); // Debug log
+        
+        // For now, let's just show what data we can get from basic profile
+        if (userData.name) {
+          notifications.showInfo(`Profile loaded for ${userData.name} (Level ${userData.level || 'Unknown'})`);
+        }
+        
+        // Basic profile doesn't include battle stats, happy, or energy with Public permissions
+        // We'll need to inform the user about this limitation
+        notifications.showWarning('Basic profile loaded. Battle stats, happy, and energy require higher API permissions than "Public".');
+        
+        // If we somehow got stats, update them
         if (strength || defense || speed || dexterity) {
           setStats({
             str: strength,
@@ -147,38 +173,33 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
             spd: speed,
             dex: dexterity
           });
-          notifications.showSuccess('Stats updated successfully!');
+          notifications.showSuccess(`Stats updated: STR ${strength}, DEF ${defense}, SPD ${speed}, DEX ${dexterity}`);
         }
-
-        // Update happy and energy - handle different possible structures
-        const currentHappy = userData.happy?.current || userData.happy || 0;
-        const currentEnergy = userData.energy?.current || userData.energy || 0;
-        
-        if (currentHappy) setHappy(currentHappy);
-        if (currentEnergy) setEnergy(currentEnergy);
-        
-        if (currentHappy || currentEnergy) {
-          notifications.showInfo(`Updated: Happy ${currentHappy}, Energy ${currentEnergy}`);
-        }
+      } else {
+        console.log('❌ Stats API call failed:', statsResponse.error); // Debug log
+        notifications.showError(`Stats API failed: ${statsResponse.error}`);
       }
 
       if (perksResponse.success && perksResponse.data) {
-        const perksData = perksResponse.data as TornPerks;
+        const perksData = perksResponse.data as any; // Use any for debugging
+        console.log('🎯 Perks Data:', perksData); // Debug log
         
         // Auto-detect and set perks
-        const propertyBonus = detectPropertyPerks(perksData.property_perks);
-        const educationBonus = detectEducationPerks(perksData.education_perks);
-        const jobBonus = detectJobPerks(perksData.job_perks);
+        const propertyBonus = detectPropertyPerks(perksData.property_perks || []);
+        const educationBonus = detectEducationPerks(perksData.education_perks || []);
+        const jobBonus = detectJobPerks(perksData.job_perks || []);
+
+        console.log('🏠 Detected Perks:', { propertyBonus, educationBonus, jobBonus }); // Debug log
 
         setPropertyPerks(propertyBonus);
         setEducationGeneral(educationBonus.general);
         setEducationStatSpecific(educationBonus.specific);
         setJobPerks(jobBonus);
 
-        // Note: Book perks and steadfast bonuses would need additional API calls
-        // or manual detection based on available data
-
         notifications.showInfo(`Auto-detected perks: Property +${propertyBonus}%, Education +${educationBonus.general + educationBonus.specific}%, Job +${jobBonus}%`);
+      } else {
+        console.log('❌ Perks API call failed:', perksResponse.error); // Debug log
+        notifications.showWarning(`Perks API failed: ${perksResponse.error || 'Unknown error'}`);
       }
 
       setLastSync(new Date());
@@ -190,8 +211,11 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
         lastRequest: rateLimitStatus.lastRequestTime
       });
 
+      console.log('✅ Auto-fill completed!'); // Debug log
+
     } catch (error) {
-      notifications.showError('Failed to fetch user data. Please try again.');
+      console.error('💥 Auto-fill error:', error); // Debug log
+      notifications.showError(`Failed to fetch user data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
