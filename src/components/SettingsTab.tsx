@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { useApiContext } from '../hooks/useApiContext';
+import { validateApiKey, encodeApiKey, decodeApiKey } from '../services/tornApi';
+import LoadingSpinner from './LoadingSpinner';
+import Tooltip from './Tooltip';
 
 interface NotificationMethods {
   showSuccess: (message: string, duration?: number) => void;
@@ -73,6 +77,22 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
 }) => {
   const [importText, setImportText] = useState('');
   const [showImport, setShowImport] = useState(false);
+  const apiContext = useApiContext();
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newKey = e.target.value.trim();
+    apiContext.setApiKey(newKey);
+    
+    if (validateApiKey(newKey)) {
+      // Save encoded key to localStorage
+      localStorage.setItem('tornApiKey', encodeApiKey(newKey));
+      apiContext.initializeApiService(newKey);
+    } else {
+      apiContext.setIsConnected(false);
+      apiContext.setUserName('');
+      apiContext.setApiService(null);
+    }
+  };
 
   const exportSettings = () => {
     const settingsData = {
@@ -188,6 +208,128 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
+      {/* API Integration Section */}
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        border: '1px solid #555555',
+        padding: '8px 12px',
+        marginBottom: '8px'
+      }}>
+        <h3 style={{color: '#88cc88', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0'}}>
+          🔗 Torn API Integration
+        </h3>
+
+        {/* API Key Input */}
+        <div style={{marginBottom: '12px'}}>
+          <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
+            API Key
+            <Tooltip content="Enter your 16-character Torn API key with Limited permissions. Get one from Settings > API Key in Torn.">
+              <span style={{color: '#88cc88', marginLeft: '4px', cursor: 'help'}}>ℹ️</span>
+            </Tooltip>
+          </label>
+          <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+            <input
+              type="password"
+              value={apiContext.apiKey}
+              onChange={handleApiKeyChange}
+              placeholder="Enter your 16-character API key"
+              style={{
+                flex: 1,
+                backgroundColor: '#222222',
+                border: `1px solid ${validateApiKey(apiContext.apiKey) ? '#88cc88' : '#666666'}`,
+                color: 'white',
+                padding: '6px 8px',
+                fontSize: '12px',
+                fontFamily: 'monospace'
+              }}
+            />
+            <button
+              onClick={() => apiContext.testConnection(notifications)}
+              disabled={!validateApiKey(apiContext.apiKey) || apiContext.isLoading}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: validateApiKey(apiContext.apiKey) ? '#4a7c59' : '#666666',
+                border: '1px solid #666666',
+                color: 'white',
+                fontSize: '11px',
+                cursor: validateApiKey(apiContext.apiKey) ? 'pointer' : 'not-allowed',
+                borderRadius: '2px'
+              }}
+            >
+              {apiContext.isLoading ? '...' : 'Test'}
+            </button>
+            {apiContext.apiKey && (
+              <button
+                onClick={() => apiContext.clearApiKey(notifications)}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#cc4444',
+                  border: '1px solid #666666',
+                  color: 'white',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  borderRadius: '2px'
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Connection Status */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '12px',
+          padding: '6px 8px',
+          backgroundColor: apiContext.isConnected ? '#1a4a2a' : '#4a1a1a',
+          border: `1px solid ${apiContext.isConnected ? '#4a7c59' : '#cc4444'}`,
+          borderRadius: '2px'
+        }}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <span style={{fontSize: '12px'}}>
+              {apiContext.isConnected ? '🟢' : '🔴'} 
+              {apiContext.isConnected ? `Connected as ${apiContext.userName}` : 'Not connected'}
+            </span>
+            {apiContext.lastSync && (
+              <span style={{fontSize: '10px', color: '#999999'}}>
+                Last sync: {apiContext.lastSync.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+          <div style={{fontSize: '10px', color: '#999999'}}>
+            Rate limit: {apiContext.rateLimitInfo.remaining}/100
+          </div>
+        </div>
+
+
+        {/* API Key Instructions */}
+        {!apiContext.isConnected && (
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#333333',
+            border: '1px solid #555555',
+            borderRadius: '2px'
+          }}>
+            <div style={{color: '#cccccc', fontSize: '11px', marginBottom: '4px'}}>
+              <strong>How to get your API key:</strong>
+            </div>
+            <ol style={{color: '#999999', fontSize: '10px', margin: 0, paddingLeft: '16px'}}>
+              <li>Go to Torn.com → Settings → API Key</li>
+              <li>Create a new key with "Limited" permissions</li>
+              <li>Copy the 16-character key and paste it above</li>
+              <li>Click "Test" to verify the connection</li>
+            </ol>
+            <div style={{color: '#ffaa66', fontSize: '10px', marginTop: '4px'}}>
+              ⚠️ Only use "Limited" permissions - never share keys with higher permissions!
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Export/Import Section */}
       <div style={{
         backgroundColor: '#2a2a2a',
@@ -226,7 +368,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
               borderRadius: '2px'
             }}
           >
-            📥 {showImport ? 'Cancel Import' : 'Import Settings'}
+            � {showImport ? 'Cancel Import' : 'Import Settings'}
           </button>
         </div>
 

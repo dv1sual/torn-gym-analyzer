@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGymCalculator } from './hooks/useGymCalculator';
 import { useResponsive } from './hooks/useResponsive';
+import { ApiProvider } from './hooks/useApiContext';
 import StatInput from './components/StatInput';
 import TrainingSetup from './components/TrainingSetup';
 import GymSelector from './components/GymSelector';
@@ -12,12 +13,13 @@ import SettingsTab from './components/SettingsTab';
 import Tooltip from './components/Tooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import NotificationSystem, { useNotifications } from './components/NotificationSystem';
-import AutoFillSection from './components/api/AutoFillSection';
+import { useApiContext } from './hooks/useApiContext';
 
-export default function App() {
+function AppContent() {
   const calculator = useGymCalculator();
   const responsive = useResponsive();
   const notifications = useNotifications();
+  const apiContext = useApiContext();
 
   return (
     <div style={{
@@ -92,7 +94,20 @@ export default function App() {
                   border: '1px solid #666666',
                   color: 'white',
                   fontSize: '11px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (calculator.activeTab !== 'calculator') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#555555';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (calculator.activeTab !== 'calculator') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#444444';
+                  }
                 }}
               >
                 📊 Calculator
@@ -105,7 +120,20 @@ export default function App() {
                   border: '1px solid #666666',
                   color: 'white',
                   fontSize: '11px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (calculator.activeTab !== 'results') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#555555';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (calculator.activeTab !== 'results') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#444444';
+                  }
                 }}
               >
                 📈 Results
@@ -118,7 +146,20 @@ export default function App() {
                   border: '1px solid #666666',
                   color: 'white',
                   fontSize: '11px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (calculator.activeTab !== 'settings') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#555555';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (calculator.activeTab !== 'settings') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#444444';
+                  }
                 }}
               >
                 ⚙️ Settings
@@ -133,29 +174,61 @@ export default function App() {
           border: '1px solid #555555',
           padding: '10px',
           fontSize: '12px',
-          marginBottom: '12px'
+          marginBottom: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
           <div style={{color: '#cccccc'}}>
             Training Prediction using <span style={{color: '#88cc88', fontWeight: 'bold'}}>Vladar Formula</span>
           </div>
+          {apiContext.isConnected && (
+            <Tooltip content="Auto-fill stats and perks from Torn API" position="top" maxWidth="300px">
+              <button
+                onClick={() => apiContext.fetchUserData(
+                  calculator.setStats,
+                  calculator.setHappy,
+                  calculator.setEnergy,
+                  calculator.setPropertyPerks,
+                  calculator.setEducationStatSpecific,
+                  calculator.setEducationGeneral,
+                  calculator.setJobPerks,
+                  calculator.setBookPerks,
+                  calculator.setSteadfastBonus,
+                  notifications
+                )}
+                disabled={apiContext.isLoading}
+                style={{
+                  padding: '8px 20px',
+                  backgroundColor: apiContext.isLoading ? '#666666' : '#4a7c59',
+                  border: '1px solid #6b9b7a',
+                  color: 'white',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: apiContext.isLoading ? 'not-allowed' : 'pointer',
+                  borderRadius: '4px',
+                  minWidth: '140px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!apiContext.isLoading) {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#5a8c69';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!apiContext.isLoading) {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#4a7c59';
+                  }
+                }}
+              >
+                {apiContext.isLoading ? '...' : '🔄 Auto-Fill'}
+              </button>
+            </Tooltip>
+          )}
         </div>
 
         {calculator.activeTab === 'calculator' && (
           <>
-            {/* API Auto-Fill Section */}
-            <AutoFillSection
-              setStats={calculator.setStats}
-              setHappy={calculator.setHappy}
-              setEnergy={calculator.setEnergy}
-              setPropertyPerks={calculator.setPropertyPerks}
-              setEducationStatSpecific={calculator.setEducationStatSpecific}
-              setEducationGeneral={calculator.setEducationGeneral}
-              setJobPerks={calculator.setJobPerks}
-              setBookPerks={calculator.setBookPerks}
-              setSteadfastBonus={calculator.setSteadfastBonus}
-              notifications={notifications}
-            />
-
             {/* Current Stats */}
             <div style={{
               backgroundColor: '#2a2a2a',
@@ -352,5 +425,13 @@ export default function App() {
         onRemove={notifications.removeNotification}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ApiProvider>
+      <AppContent />
+    </ApiProvider>
   );
 }

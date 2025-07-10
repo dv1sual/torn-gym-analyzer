@@ -44,13 +44,29 @@ const GymSelector: React.FC<GymSelectorProps> = ({ selectedGym, onGymSelect, scr
       
       return (
         <div>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{gymName}</div>
-          <div style={{ fontSize: '11px', marginBottom: '2px' }}>Energy: {energyCost}</div>
-          <div style={{ fontSize: '11px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            fontWeight: 'bold', 
+            marginBottom: '4px' 
+          }}>
+            <span>{gymName}</span>
+            <span style={{ fontSize: '11px', fontWeight: 'normal' }}>Energy: {energyCost}</span>
+          </div>
+          <div style={{ 
+            fontSize: '11px', 
+            display: 'flex', 
+            flexDirection: 'row',
+            flexWrap: 'nowrap', 
+            gap: '12px',
+            justifyContent: 'flex-start',
+            alignItems: 'center'
+          }}>
             {Object.entries(gymData.dots).map(([stat, dots]) => (
-              <div key={stat} style={{ display: 'inline-block', marginRight: '8px' }}>
-                {statIcons[stat as keyof typeof statIcons]} {statNames[stat as keyof typeof statNames]}: {dots}
-              </div>
+              <span key={stat} style={{ whiteSpace: 'nowrap' }}>
+                {statIcons[stat as keyof typeof statIcons]}{statNames[stat as keyof typeof statNames]}:{dots}
+              </span>
             ))}
           </div>
         </div>

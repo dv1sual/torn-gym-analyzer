@@ -6,6 +6,7 @@ import TornApiService, {
   detectPropertyPerks,
   detectEducationPerks,
   detectJobPerks,
+  detectBookPerks,
   detectFactionSteadfast,
   TornUser,
   TornPerks
@@ -202,23 +203,25 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
         const propertyBonus = detectPropertyPerks(perksData.property_perks || []);
         const educationBonus = detectEducationPerks(perksData.education_perks || []);
         const jobBonus = detectJobPerks(perksData.job_perks || []);
+        const bookBonus = detectBookPerks(perksData.book_perks || []);
         const factionSteadfast = detectFactionSteadfast(perksData.faction_perks || []);
 
-        console.log('🏠 Detected Perks:', { propertyBonus, educationBonus, jobBonus, factionSteadfast }); // Debug log
+        console.log('🏠 Detected Perks:', { propertyBonus, educationBonus, jobBonus, bookBonus, factionSteadfast }); // Debug log
 
         // Update all detected perks
         setPropertyPerks(propertyBonus);
         setEducationGeneral(educationBonus.general);
         setEducationStatSpecific(educationBonus.specific);
         setJobPerks(jobBonus);
+        setBookPerks(bookBonus);
         setSteadfastBonus(factionSteadfast);
 
         // Show comprehensive perk detection results
         const totalEducation = educationBonus.general + educationBonus.specific;
         const totalSteadfast = factionSteadfast.str + factionSteadfast.def + factionSteadfast.spd + factionSteadfast.dex;
         
-        if (propertyBonus || totalEducation || jobBonus || totalSteadfast) {
-          notifications.showSuccess(`Auto-detected perks: Property +${propertyBonus}%, Education +${totalEducation}%, Job +${jobBonus}%, Steadfast +${totalSteadfast}%`);
+        if (propertyBonus || totalEducation || jobBonus || bookBonus || totalSteadfast) {
+          notifications.showSuccess(`Auto-detected perks: Property +${propertyBonus}%, Education +${totalEducation}%, Job +${jobBonus}%, Book +${bookBonus}%, Steadfast +${totalSteadfast}%`);
         } else {
           notifications.showInfo('No gym-related perks detected in your account.');
         }
@@ -271,7 +274,7 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
       <div style={{marginBottom: '12px'}}>
         <label style={{color: 'white', fontSize: '12px', display: 'block', marginBottom: '4px'}}>
           API Key
-          <Tooltip content="Enter your 16-character Torn API key. Get one from Settings > API Key in Torn.">
+          <Tooltip content="Enter your 16-character Torn API key with Limited permissions. Get one from Settings > API Key in Torn.">
             <span style={{color: '#88cc88', marginLeft: '4px', cursor: 'help'}}>ℹ️</span>
           </Tooltip>
         </label>
@@ -353,7 +356,7 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
       </div>
 
       {/* Auto-Fill Button */}
-      <div style={{textAlign: 'center'}}>
+      <div style={{textAlign: 'center', marginTop: '16px'}}>
         {isLoading ? (
           <LoadingSpinner text="Fetching data from Torn..." />
         ) : (
@@ -362,24 +365,35 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
               onClick={fetchUserData}
               disabled={!isConnected || isLoading}
               style={{
-                padding: '8px 16px',
-                backgroundColor: isConnected ? '#4a7c59' : '#666666',
-                border: '1px solid #6b9b7a',
+                padding: '24px 48px',
+                backgroundColor: isConnected ? '#22c55e' : '#666666',
+                border: isConnected ? '3px solid #16a34a' : '3px solid #888888',
                 color: 'white',
-                fontSize: '12px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 cursor: isConnected ? 'pointer' : 'not-allowed',
-                borderRadius: '4px',
-                transition: 'all 0.2s ease'
+                borderRadius: '12px',
+                transition: 'all 0.3s ease',
+                boxShadow: isConnected ? '0 8px 16px rgba(34, 197, 94, 0.4)' : 'none',
+                minWidth: '450px',
+                width: '100%',
+                maxWidth: '600px',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                background: isConnected ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : '#666666'
               }}
               onMouseEnter={(e) => {
                 if (isConnected) {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5a8c69';
+                  (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+                  (e.target as HTMLButtonElement).style.transform = 'translateY(-3px)';
+                  (e.target as HTMLButtonElement).style.boxShadow = '0 12px 24px rgba(34, 197, 94, 0.5)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isConnected) {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4a7c59';
+                  (e.target as HTMLButtonElement).style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+                  (e.target as HTMLButtonElement).style.transform = 'translateY(0px)';
+                  (e.target as HTMLButtonElement).style.boxShadow = '0 8px 16px rgba(34, 197, 94, 0.4)';
                 }
               }}
             >
@@ -403,12 +417,12 @@ const AutoFillSection: React.FC<AutoFillSectionProps> = ({
           </div>
           <ol style={{color: '#999999', fontSize: '10px', margin: 0, paddingLeft: '16px'}}>
             <li>Go to Torn.com → Settings → API Key</li>
-            <li>Create a new key with "Public" permissions</li>
+            <li>Create a new key with "Limited" permissions</li>
             <li>Copy the 16-character key and paste it above</li>
             <li>Click "Test" to verify the connection</li>
           </ol>
           <div style={{color: '#ffaa66', fontSize: '10px', marginTop: '4px'}}>
-            ⚠️ Only use "Public" permissions - never share keys with higher permissions!
+            ⚠️ Only use "Limited" permissions - never share keys with higher permissions!
           </div>
         </div>
       )}

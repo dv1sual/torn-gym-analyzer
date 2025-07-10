@@ -191,41 +191,48 @@ export const decodeApiKey = (encodedKey: string): string => {
 export const detectPropertyPerks = (propertyPerks: any[]): number => {
   if (!Array.isArray(propertyPerks)) return 0;
   
-  const perkValues: Record<string, number> = {
-    'Pool': 5,
-    'Sauna': 5,
-    'Hot Tub': 2.5,
-    'Gym': 5,
-    'Shooting Range': 5,
-    'Private Gym': 10,
-    'Private Pool': 5,
-    'Private Sauna': 5,
-    // Add more property perks as needed
-  };
+  let totalBonus = 0;
 
-  return propertyPerks.reduce((total, perk) => {
-    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
-    return total + (perkValues[perkName] || 0);
-  }, 0);
+  propertyPerks.forEach(perk => {
+    const perkText = typeof perk === 'string' ? perk : perk?.name || perk?.description || '';
+    
+    // Look for gym gains percentage in the perk description
+    // Examples: "+ 2% gym gains", "+ 5% gym gains", etc.
+    const gymGainsMatch = perkText.match(/\+\s*(\d+(?:\.\d+)?)%\s+gym\s+gains/i);
+    
+    if (gymGainsMatch) {
+      const percentage = parseFloat(gymGainsMatch[1]);
+      totalBonus += percentage;
+    }
+  });
+
+  return totalBonus;
 };
 
 export const detectEducationPerks = (educationPerks: any[]): { general: number; specific: number } => {
   if (!Array.isArray(educationPerks)) return { general: 0, specific: 0 };
   
-  const generalPerks = ['Sports Science', 'Advanced Sports Science', 'Fitness'];
-  const specificPerks = ['Strength Training', 'Defense Training', 'Speed Training', 'Dexterity Training'];
-
   let general = 0;
   let specific = 0;
 
   educationPerks.forEach(perk => {
-    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
+    const perkText = typeof perk === 'string' ? perk : perk?.name || perk?.description || '';
     
-    if (generalPerks.some(gp => perkName.includes(gp))) {
-      general += 5;
-    }
-    if (specificPerks.some(sp => perkName.includes(sp))) {
-      specific += 10;
+    // Look for gym gains percentage in education perks
+    // Examples: "+ 5% gym gains", "+ 10% strength gym gains", etc.
+    const gymGainsMatch = perkText.match(/\+\s*(\d+(?:\.\d+)?)%\s+(?:(\w+)\s+)?gym\s+gains/i);
+    
+    if (gymGainsMatch) {
+      const percentage = parseFloat(gymGainsMatch[1]);
+      const statSpecific = gymGainsMatch[2]; // Could be "strength", "defense", etc.
+      
+      if (statSpecific) {
+        // Stat-specific education perk
+        specific += percentage;
+      } else {
+        // General gym gains perk
+        general += percentage;
+      }
     }
   });
 
@@ -235,13 +242,43 @@ export const detectEducationPerks = (educationPerks: any[]): { general: number; 
 export const detectJobPerks = (jobPerks: any[]): number => {
   if (!Array.isArray(jobPerks)) return 0;
   
-  const gymRelatedPerks = ['Gym Guru', 'Fitness Instructor', 'Personal Trainer', 'Gym'];
+  let totalBonus = 0;
+
+  jobPerks.forEach(perk => {
+    const perkText = typeof perk === 'string' ? perk : perk?.name || perk?.description || '';
+    
+    // Look for gym gains percentage in job perks
+    // Examples: "+ 5% gym gains", etc.
+    const gymGainsMatch = perkText.match(/\+\s*(\d+(?:\.\d+)?)%\s+gym\s+gains/i);
+    
+    if (gymGainsMatch) {
+      const percentage = parseFloat(gymGainsMatch[1]);
+      totalBonus += percentage;
+    }
+  });
+
+  return totalBonus;
+};
+
+export const detectBookPerks = (bookPerks: any[]): number => {
+  if (!Array.isArray(bookPerks)) return 0;
   
-  return jobPerks.reduce((total, perk) => {
-    const perkName = typeof perk === 'string' ? perk : perk?.name || '';
-    const isGymRelated = gymRelatedPerks.some(gp => perkName.includes(gp));
-    return total + (isGymRelated ? 5 : 0);
-  }, 0);
+  let totalBonus = 0;
+
+  bookPerks.forEach(book => {
+    const bookText = typeof book === 'string' ? book : book?.name || book?.description || '';
+    
+    // Look for gym gains percentage in book perks
+    // Examples: "+ 5% gym gains", etc.
+    const gymGainsMatch = bookText.match(/\+\s*(\d+(?:\.\d+)?)%\s+gym\s+gains/i);
+    
+    if (gymGainsMatch) {
+      const percentage = parseFloat(gymGainsMatch[1]);
+      totalBonus += percentage;
+    }
+  });
+
+  return totalBonus;
 };
 
 export const detectFactionSteadfast = (

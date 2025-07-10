@@ -6,6 +6,7 @@ interface TooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right';
   delay?: number;
   disabled?: boolean;
+  maxWidth?: string;
 }
 
 const Tooltip: React.FC<TooltipProps> = ({ 
@@ -13,7 +14,8 @@ const Tooltip: React.FC<TooltipProps> = ({
   children, 
   position = 'top', 
   delay = 500,
-  disabled = false 
+  disabled = false,
+  maxWidth = '300px'
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -48,9 +50,12 @@ const Tooltip: React.FC<TooltipProps> = ({
       visibility: isVisible ? 'visible' as const : 'hidden' as const,
       transition: 'opacity 0.2s ease-in-out, visibility 0.2s ease-in-out',
       pointerEvents: 'none' as const,
-      maxWidth: '300px',
+      maxWidth: '250px', // Generous max width
       whiteSpace: 'normal' as const,
-      lineHeight: '1.4'
+      wordWrap: 'break-word' as const,
+      overflowWrap: 'break-word' as const,
+      lineHeight: '1.4',
+      textAlign: 'left' as const
     };
 
     switch (position) {
