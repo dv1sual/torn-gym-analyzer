@@ -58,14 +58,12 @@ const StatInput: React.FC<StatInputProps> = ({ stats, onChange }) => {
         <div style={{
           display: 'flex', 
           alignItems: 'center', 
-          gap: responsive.isMobile() ? '6px' : '8px', 
-          marginBottom: responsive.isMobile() ? '6px' : '8px',
-          flexDirection: responsive.windowWidth < 480 ? 'column' : 'row',
-          textAlign: responsive.windowWidth < 480 ? 'center' : 'left'
+          gap: responsive.isMobile() ? '8px' : '8px', 
+          marginBottom: responsive.isMobile() ? '4px' : '8px'
         }}>
           <span style={{
             color: color, 
-            fontSize: responsive.isMobile() ? '18px' : '20px'
+            fontSize: responsive.isMobile() ? '16px' : '20px'
           }}>
             {label === 'Strength' && '💪'}
             {label === 'Defense' && '🛡️'}
@@ -78,14 +76,14 @@ const StatInput: React.FC<StatInputProps> = ({ stats, onChange }) => {
           }}>
             <div style={{
               color: color, 
-              fontSize: fontSize.normal, 
+              fontSize: responsive.isMobile() ? '11px' : fontSize.normal, 
               fontWeight: 'bold'
             }}>
               {responsive.isMobile() ? label.substring(0, 3).toUpperCase() : label.toUpperCase()}
             </div>
             <div style={{
               color: 'white', 
-              fontSize: responsive.isMobile() ? fontSize.large : '18px', 
+              fontSize: responsive.isMobile() ? '13px' : '18px', 
               fontWeight: 'bold',
               wordBreak: 'break-all'
             }}>

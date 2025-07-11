@@ -57,8 +57,7 @@ function AppContent() {
             <div style={{
               display: 'flex', 
               alignItems: 'center', 
-              gap: responsive.isMobile() ? '8px' : '12px',
-              width: responsive.isMobile() ? '100%' : 'auto',
+              gap: '10px',
               justifyContent: responsive.isMobile() ? 'center' : 'flex-start'
             }}>
               <img
@@ -66,7 +65,7 @@ function AppContent() {
                 alt="Torn logo"
                 style={{
                   width: 'auto',
-                  height: responsive.isMobile() ? 32 : 40,
+                  height: responsive.isMobile() ? 28 : 40,
                   objectFit: 'contain',
                   border: '1px solid #333',
                   borderRadius: 2,
@@ -76,33 +75,34 @@ function AppContent() {
               />
               <h1 style={{
                 color: 'white', 
-                fontSize: responsive.isMobile() ? '14px' : '16px', 
+                fontSize: responsive.isMobile() ? '13px' : '16px', 
                 fontWeight: 'bold', 
                 margin: 0,
-                textAlign: responsive.isMobile() ? 'center' : 'left'
+                textAlign: 'center'
               }}>
                 {responsive.isMobile() ? 'TRAINING CALCULATOR' : 'TRAINING GAINS CALCULATOR'}
               </h1>
             </div>
             <div style={{
               display: 'flex', 
-              gap: responsive.isMobile() ? '4px' : '8px', 
+              gap: responsive.isMobile() ? '3px' : '8px', 
               flexWrap: 'wrap',
-              justifyContent: 'center',
-              width: responsive.isMobile() ? '100%' : 'auto'
+              justifyContent: 'center'
             }}>
               <button 
                 onClick={() => calculator.setActiveTab('calculator')}
                 style={{
-                  padding: '4px 8px',
+                  padding: responsive.isMobile() ? '8px 12px' : '4px 8px',
                   backgroundColor: calculator.activeTab === 'calculator' ? '#88cc88' : '#444444',
                   border: '1px solid #666666',
                   color: 'white',
-                  fontSize: '11px',
+                  fontSize: responsive.isMobile() ? '10px' : '11px',
                   cursor: 'pointer',
                   borderRadius: '4px',
                   fontWeight: 'bold',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  minWidth: responsive.isMobile() ? '70px' : 'auto',
+                  textAlign: 'center'
                 }}
                 onMouseEnter={(e) => {
                   if (calculator.activeTab !== 'calculator') {
@@ -115,20 +115,22 @@ function AppContent() {
                   }
                 }}
               >
-                📊 Calculator
+                {responsive.isMobile() ? '📊 Calc' : '📊 Calculator'}
               </button>
               <button 
                 onClick={() => calculator.setActiveTab('results')}
                 style={{
-                  padding: '4px 8px',
+                  padding: responsive.isMobile() ? '8px 12px' : '4px 8px',
                   backgroundColor: calculator.activeTab === 'results' ? '#88cc88' : '#444444',
                   border: '1px solid #666666',
                   color: 'white',
-                  fontSize: '11px',
+                  fontSize: responsive.isMobile() ? '10px' : '11px',
                   cursor: 'pointer',
                   borderRadius: '4px',
                   fontWeight: 'bold',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  minWidth: responsive.isMobile() ? '70px' : 'auto',
+                  textAlign: 'center'
                 }}
                 onMouseEnter={(e) => {
                   if (calculator.activeTab !== 'results') {
@@ -141,20 +143,22 @@ function AppContent() {
                   }
                 }}
               >
-                📈 Results
+                {responsive.isMobile() ? '📈 Results' : '📈 Results'}
               </button>
               <button 
                 onClick={() => calculator.setActiveTab('history')}
                 style={{
-                  padding: '4px 8px',
+                  padding: responsive.isMobile() ? '8px 12px' : '4px 8px',
                   backgroundColor: calculator.activeTab === 'history' ? '#88cc88' : '#444444',
                   border: '1px solid #666666',
                   color: 'white',
-                  fontSize: '11px',
+                  fontSize: responsive.isMobile() ? '10px' : '11px',
                   cursor: 'pointer',
                   borderRadius: '4px',
                   fontWeight: 'bold',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  minWidth: responsive.isMobile() ? '70px' : 'auto',
+                  textAlign: 'center'
                 }}
                 onMouseEnter={(e) => {
                   if (calculator.activeTab !== 'history') {
@@ -167,20 +171,22 @@ function AppContent() {
                   }
                 }}
               >
-                📜 History
+                {responsive.isMobile() ? '📜 History' : '📜 History'}
               </button>
               <button 
                 onClick={() => calculator.setActiveTab('settings')}
                 style={{
-                  padding: '4px 8px',
+                  padding: responsive.isMobile() ? '8px 12px' : '4px 8px',
                   backgroundColor: calculator.activeTab === 'settings' ? '#88cc88' : '#444444',
                   border: '1px solid #666666',
                   color: 'white',
-                  fontSize: '11px',
+                  fontSize: responsive.isMobile() ? '10px' : '11px',
                   cursor: 'pointer',
                   borderRadius: '4px',
                   fontWeight: 'bold',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  minWidth: responsive.isMobile() ? '70px' : 'auto',
+                  textAlign: 'center'
                 }}
                 onMouseEnter={(e) => {
                   if (calculator.activeTab !== 'settings') {
@@ -193,7 +199,7 @@ function AppContent() {
                   }
                 }}
               >
-                ⚙️ Settings
+                {responsive.isMobile() ? '⚙️ Settings' : '⚙️ Settings'}
               </button>
             </div>
           </div>
