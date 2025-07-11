@@ -33,34 +33,40 @@ function AppContent() {
       display: 'flex',
       justifyContent: 'center'
     }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '900px',
-        backgroundColor: '#191919',
-        padding: responsive.screenSize === 'mobile' ? '10px' : '20px 0'
-      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '900px',
+          backgroundColor: '#191919',
+          padding: responsive.getMobilePadding()
+        }}>
         {/* Header */}
         <div style={{
           backgroundColor: '#2a2a2a',
           border: '1px solid #444444',
           borderBottom: '2px solid #444444',
-          padding: '8px 12px',
+          padding: responsive.isMobile() ? '6px 8px' : '8px 12px',
           marginBottom: '12px'
         }}>
           <div style={{
             display: 'flex', 
-            flexDirection: responsive.screenSize === 'mobile' ? 'column' : 'row',
+            flexDirection: responsive.isMobile() ? 'column' : 'row',
             justifyContent: 'space-between', 
             alignItems: 'center',
-            gap: responsive.screenSize === 'mobile' ? '8px' : '0px'
+            gap: responsive.isMobile() ? '8px' : '0px'
           }}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <div style={{
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: responsive.isMobile() ? '8px' : '12px',
+              width: responsive.isMobile() ? '100%' : 'auto',
+              justifyContent: responsive.isMobile() ? 'center' : 'flex-start'
+            }}>
               <img
                 src={tornLogo}
                 alt="Torn logo"
                 style={{
                   width: 'auto',
-                  height: 40,
+                  height: responsive.isMobile() ? 32 : 40,
                   objectFit: 'contain',
                   border: '1px solid #333',
                   borderRadius: 2,
@@ -68,11 +74,23 @@ function AppContent() {
                     'inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.5)',
                 }}
               />
-              <h1 style={{color: 'white', fontSize: '16px', fontWeight: 'bold', margin: 0}}>
-                TRAINING GAINS CALCULATOR
+              <h1 style={{
+                color: 'white', 
+                fontSize: responsive.isMobile() ? '14px' : '16px', 
+                fontWeight: 'bold', 
+                margin: 0,
+                textAlign: responsive.isMobile() ? 'center' : 'left'
+              }}>
+                {responsive.isMobile() ? 'TRAINING CALCULATOR' : 'TRAINING GAINS CALCULATOR'}
               </h1>
             </div>
-            <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+            <div style={{
+              display: 'flex', 
+              gap: responsive.isMobile() ? '4px' : '8px', 
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              width: responsive.isMobile() ? '100%' : 'auto'
+            }}>
               <button 
                 onClick={() => calculator.setActiveTab('calculator')}
                 style={{
@@ -185,24 +203,33 @@ function AppContent() {
         <div style={{
           backgroundColor: '#2a2a2a',
           border: '1px solid #555555',
-          padding: '10px',
-          fontSize: '12px',
+          padding: responsive.isMobile() ? '8px' : '10px',
+          fontSize: responsive.isMobile() ? '11px' : '12px',
           marginBottom: '12px',
           display: 'flex',
+          flexDirection: responsive.isMobile() ? 'column' : 'row',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: responsive.isMobile() ? '8px' : '0px'
         }}>
           {apiContext.userStats ? (
-            <strong style={{ color: '#ccc' /* ← full line in bold */ }}>
+            <strong style={{ 
+              color: '#ccc',
+              textAlign: responsive.isMobile() ? 'center' : 'left',
+              fontSize: responsive.isMobile() ? '10px' : '12px'
+            }}>
               {apiContext.userStats.name as string}
-              {' · '}
+              {responsive.isMobile() ? <br /> : ' · '}
               {apiContext.userStats.rank as string}
-              {' · '}
+              {responsive.isMobile() ? <br /> : ' · '}
               {(apiContext.userStats.faction as any).position} of&nbsp;
               {(apiContext.userStats.faction as any).faction_name}
             </strong>
           ) : (
-            <span style={{ color: '#ccc' }}>
+            <span style={{ 
+              color: '#ccc',
+              textAlign: responsive.isMobile() ? 'center' : 'left'
+            }}>
               Training Prediction using&nbsp;
               <span style={{ color: '#88cc88', fontWeight: 'bold' }}>
                 Vladar Formula
@@ -226,15 +253,15 @@ function AppContent() {
                 )}
                 disabled={apiContext.isLoading}
                 style={{
-                  padding: '8px 20px',
+                  padding: responsive.isMobile() ? '6px 12px' : '8px 20px',
                   backgroundColor: apiContext.isLoading ? '#666666' : '#4a7c59',
                   border: '1px solid #6b9b7a',
                   color: 'white',
-                  fontSize: '12px',
+                  fontSize: responsive.isMobile() ? '11px' : '12px',
                   fontWeight: 'bold',
                   cursor: apiContext.isLoading ? 'not-allowed' : 'pointer',
                   borderRadius: '4px',
-                  minWidth: '140px',
+                  minWidth: responsive.isMobile() ? '120px' : '140px',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
@@ -248,7 +275,7 @@ function AppContent() {
                   }
                 }}
               >
-                {apiContext.isLoading ? '...' : '🔄 Auto-Fill'}
+                {apiContext.isLoading ? '...' : (responsive.isMobile() ? '🔄 Fill' : '🔄 Auto-Fill')}
               </button>
             </Tooltip>
           )}

@@ -24,7 +24,7 @@ describe('useResponsive', () => {
   })
 
   it('should return tablet screen size for medium screens', () => {
-    window.innerWidth = 600
+    window.innerWidth = 800
     const { result } = renderHook(() => useResponsive())
     
     expect(result.current.screenSize).toBe('tablet')
@@ -58,14 +58,14 @@ describe('useResponsive', () => {
     expect(desktopResult.current.getGymGridColumns()).toBe('repeat(16, 1fr)')
     
     // Tablet
-    window.innerWidth = 600
+    window.innerWidth = 800
     const { result: tabletResult } = renderHook(() => useResponsive())
     expect(tabletResult.current.getGymGridColumns()).toBe('repeat(8, 1fr)')
     
     // Mobile
     window.innerWidth = 400
     const { result: mobileResult } = renderHook(() => useResponsive())
-    expect(mobileResult.current.getGymGridColumns()).toBe('repeat(4, 1fr)')
+    expect(mobileResult.current.getGymGridColumns()).toBe('repeat(3, 1fr)')
   })
 
   it('should return correct stat grid columns for different screen sizes', () => {
@@ -77,7 +77,7 @@ describe('useResponsive', () => {
     // Mobile
     window.innerWidth = 400
     const { result: mobileResult } = renderHook(() => useResponsive())
-    expect(mobileResult.current.getStatGridColumns()).toBe('repeat(2, 1fr)')
+    expect(mobileResult.current.getStatGridColumns()).toBe('repeat(1, 1fr)')
   })
 
   it('should return correct perks grid columns for different screen sizes', () => {
@@ -87,14 +87,14 @@ describe('useResponsive', () => {
     expect(desktopResult.current.getPerksGridColumns()).toBe('repeat(5, 1fr)')
     
     // Tablet
-    window.innerWidth = 600
+    window.innerWidth = 800
     const { result: tabletResult } = renderHook(() => useResponsive())
     expect(tabletResult.current.getPerksGridColumns()).toBe('repeat(3, 1fr)')
     
     // Mobile
     window.innerWidth = 400
     const { result: mobileResult } = renderHook(() => useResponsive())
-    expect(mobileResult.current.getPerksGridColumns()).toBe('repeat(2, 1fr)')
+    expect(mobileResult.current.getPerksGridColumns()).toBe('repeat(1, 1fr)')
   })
 
   it('should return correct settings grid columns for different screen sizes', () => {

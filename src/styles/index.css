@@ -130,21 +130,133 @@ button[style*="margin: 0px"] {
   border-collapse: collapse;
 }
 
-/* Responsive grid adjustments */
+/* Mobile-first responsive design */
+@media (max-width: 640px) {
+  /* Mobile optimizations */
+  body {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  /* Improve touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 12px;
+  }
+  
+  /* Better input sizing */
+  input[type="text"],
+  input[type="number"] {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Improve text readability */
+  h1, h2, h3 {
+    line-height: 1.3;
+  }
+  
+  /* Better spacing for mobile */
+  div[style*="padding"] {
+    padding: 8px !important;
+  }
+  
+  /* Optimize grid layouts */
+  div[style*="gap: 12px"] {
+    gap: 8px !important;
+  }
+  
+  div[style*="gap: 8px"] {
+    gap: 4px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small mobile screens */
+  body {
+    font-size: 13px;
+  }
+  
+  /* Smaller touch targets for very small screens */
+  button {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  /* Compact inputs */
+  input[type="text"],
+  input[type="number"] {
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 16px; /* Still 16px to prevent zoom */
+  }
+  
+  /* Tighter spacing */
+  div[style*="padding"] {
+    padding: 6px !important;
+  }
+  
+  div[style*="margin"] {
+    margin: 4px !important;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 896px) and (orientation: landscape) {
+  /* Optimize for landscape mobile */
+  .header-buttons {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  
+  /* Reduce vertical spacing in landscape */
+  div[style*="marginBottom: 12px"] {
+    margin-bottom: 8px !important;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders and shadows */
+  button, input {
+    border-width: 0.5px;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  /* Ensure good contrast in dark mode */
+  input:focus {
+    outline: 2px solid #88cc88;
+    outline-offset: 1px;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Legacy responsive adjustments */
 @media (max-width: 1200px) {
-  /* Reduce columns for medium screens */
   div[style*="gridTemplateColumns: repeat(8, 1fr)"] {
     grid-template-columns: repeat(6, 1fr) !important;
   }
 }
 
 @media (max-width: 768px) {
-  /* Further reduce columns for tablet */
   div[style*="gridTemplateColumns: repeat(8, 1fr)"] {
     grid-template-columns: repeat(4, 1fr) !important;
   }
   
-  /* Stack forms on mobile */
   div[style*="gridTemplateColumns: repeat(auto-fit, minmax(220px, 1fr))"] {
     grid-template-columns: 1fr !important;
   }
@@ -156,29 +268,14 @@ button[style*="margin: 0px"] {
   div[style*="gridTemplateColumns: repeat(4, 1fr)"] {
     grid-template-columns: repeat(2, 1fr) !important;
   }
-  
-  /* Adjust gym button sizes */
-  button[style*="width: 92px"] {
-    width: 70px !important;
-    height: 40px !important;
-  }
 }
 
 @media (max-width: 480px) {
-  /* Mobile view - fewer columns */
   div[style*="gridTemplateColumns: repeat(8, 1fr)"] {
     grid-template-columns: repeat(3, 1fr) !important;
   }
   
-  /* Single column on very small screens */
   div[style*="gridTemplateColumns: repeat(2, 1fr)"] {
     grid-template-columns: 1fr !important;
-  }
-  
-  /* Smaller gym squares on mobile */
-  button[style*="width: 92px"] {
-    width: 50px !important;
-    height: 35px !important;
-    font-size: 9px !important;
   }
 }

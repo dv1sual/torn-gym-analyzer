@@ -1,4 +1,5 @@
 import React from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 
 type StatAllocation = {
   str: number;
@@ -13,6 +14,9 @@ interface StatInputProps {
 }
 
 const StatInput: React.FC<StatInputProps> = ({ stats, onChange }) => {
+  const responsive = useResponsive();
+  const fontSize = responsive.getMobileFontSize();
+
   const StatInputField = ({ label, value, onChange, color }: { label: string; value: number; onChange: (val: number) => void; color: string }) => {
     const [inputValue, setInputValue] = React.useState(value.toString());
     const [isFocused, setIsFocused] = React.useState(false);
@@ -47,33 +51,60 @@ const StatInput: React.FC<StatInputProps> = ({ stats, onChange }) => {
       <div style={{
         backgroundColor: '#2a2a2a',
         border: '1px solid #444444',
-        padding: '10px',
-        margin: '5px',
+        padding: responsive.isMobile() ? '8px' : '10px',
+        margin: responsive.isMobile() ? '3px' : '5px',
         borderRadius: '8px'
       }}>
-        <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
-          <span style={{color: color, fontSize: '20px'}}>
+        <div style={{
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: responsive.isMobile() ? '6px' : '8px', 
+          marginBottom: responsive.isMobile() ? '6px' : '8px',
+          flexDirection: responsive.windowWidth < 480 ? 'column' : 'row',
+          textAlign: responsive.windowWidth < 480 ? 'center' : 'left'
+        }}>
+          <span style={{
+            color: color, 
+            fontSize: responsive.isMobile() ? '18px' : '20px'
+          }}>
             {label === 'Strength' && '💪'}
             {label === 'Defense' && '🛡️'}
             {label === 'Speed' && '⚡'}
             {label === 'Dexterity' && '🎯'}
           </span>
-          <div>
-            <div style={{color: color, fontSize: '13px', fontWeight: 'bold'}}>
-              {label.toUpperCase()}
+          <div style={{
+            flex: 1,
+            minWidth: 0
+          }}>
+            <div style={{
+              color: color, 
+              fontSize: fontSize.normal, 
+              fontWeight: 'bold'
+            }}>
+              {responsive.isMobile() ? label.substring(0, 3).toUpperCase() : label.toUpperCase()}
             </div>
-            <div style={{color: 'white', fontSize: '18px', fontWeight: 'bold'}}>
+            <div style={{
+              color: 'white', 
+              fontSize: responsive.isMobile() ? fontSize.large : '18px', 
+              fontWeight: 'bold',
+              wordBreak: 'break-all'
+            }}>
               {value.toLocaleString()}
             </div>
           </div>
         </div>
         
-        <div style={{color: '#999999', fontSize: '11px', marginBottom: '8px'}}>
+        <div style={{
+          color: '#999999', 
+          fontSize: fontSize.small, 
+          marginBottom: responsive.isMobile() ? '6px' : '8px'
+        }}>
           Current Level
         </div>
         
         <input
           type="text"
+          inputMode="numeric"
           value={inputValue}
           onChange={handleChange}
           onFocus={handleFocus}
@@ -83,10 +114,12 @@ const StatInput: React.FC<StatInputProps> = ({ stats, onChange }) => {
             backgroundColor: '#222222',
             border: '1px solid #666666',
             color: 'white',
-            padding: '4px 8px',
-            fontSize: '12px'
+            padding: responsive.isMobile() ? '8px 12px' : '4px 8px',
+            fontSize: responsive.isMobile() ? '16px' : '12px', // 16px prevents zoom on iOS
+            borderRadius: '4px',
+            boxSizing: 'border-box'
           }}
-          placeholder="e.g. 1,000,000"
+          placeholder={responsive.isMobile() ? "1,000,000" : "e.g. 1,000,000"}
         />
       </div>
     );
