@@ -146,7 +146,7 @@ const GymSelector: React.FC<GymSelectorProps> = ({ selectedGym, onGymSelect, scr
     }
 
     return (
-      <Tooltip content={getTooltipContent()} position="top" delay={300}>
+      <Tooltip content={getTooltipContent()} position="top">
         {button}
       </Tooltip>
     );

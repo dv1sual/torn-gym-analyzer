@@ -35,7 +35,7 @@ interface TornApiState {
 }
 
 interface TornApiActions {
-  setApiKey: (key: string) => void;
+  setApiKey: (key: string) => Promise<void>;
   testConnection: () => Promise<boolean>;
   fetchUserData: () => Promise<{
     stats?: { str: number; def: number; spd: number; dex: number };
@@ -76,22 +76,30 @@ export const useTornApi = ({ notifications }: UseTornApiProps): TornApiState & T
 
   // Load saved API key on mount
   useEffect(() => {
-    const savedKey = localStorage.getItem('tornApiKey');
-    if (savedKey) {
-      const decodedKey = decodeApiKey(savedKey);
-      if (validateApiKey(decodedKey)) {
-        setState(prev => ({ ...prev, apiKey: decodedKey }));
-        const service = new TornApiService({ apiKey: decodedKey });
-        setApiService(service);
+    const loadApiKey = async () => {
+      const savedKey = localStorage.getItem('tornApiKey');
+      if (savedKey) {
+        try {
+          const decodedKey = await decodeApiKey(savedKey);
+          if (await validateApiKey(decodedKey)) {
+            setState(prev => ({ ...prev, apiKey: decodedKey }));
+            const service = new TornApiService({ apiKey: decodedKey });
+            setApiService(service);
+          }
+        } catch (error) {
+          // Invalid saved key, remove it
+          localStorage.removeItem('tornApiKey');
+        }
       }
-    }
+    };
+    loadApiKey();
   }, []);
 
-  const setApiKey = useCallback((key: string) => {
+  const setApiKey = useCallback(async (key: string) => {
     setState(prev => ({ ...prev, apiKey: key }));
     
-    if (validateApiKey(key)) {
-      localStorage.setItem('tornApiKey', encodeApiKey(key));
+    if (await validateApiKey(key)) {
+      localStorage.setItem('tornApiKey', await encodeApiKey(key));
       const service = new TornApiService({ apiKey: key });
       setApiService(service);
     } else {
