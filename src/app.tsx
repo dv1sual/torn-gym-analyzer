@@ -68,7 +68,7 @@ function AppContent() {
                 }}
               />
               <h1 style={{color: 'white', fontSize: '16px', fontWeight: 'bold', margin: 0}}>
-                Gym Stats Calculator
+                TRAINING GAINS CALCULATOR
               </h1>
             </div>
             <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
