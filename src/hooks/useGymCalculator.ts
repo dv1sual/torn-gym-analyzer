@@ -9,6 +9,40 @@ type StatAllocation = {
   dex: number;
 };
 
+export interface TrainingSession {
+  id: string;
+  timestamp: number;
+  date: string;
+  gym: string;
+  stats: {
+    str: number;
+    def: number;
+    spd: number;
+    dex: number;
+  };
+  gains: {
+    str: number;
+    def: number;
+    spd: number;
+    dex: number;
+  };
+  energy: number;
+  happy: number;
+  perks: {
+    property: number;
+    education: number;
+    job: number;
+    book: number;
+  };
+  steadfast: {
+    str: number;
+    def: number;
+    spd: number;
+    dex: number;
+  };
+  totalGain: number;
+}
+
 export function useGymCalculator() {
   // State management with localStorage persistence
   const [stats, setStats] = useLocalStorage('gymCalc_stats', { str: 0, def: 0, spd: 0, dex: 0 });
@@ -46,6 +80,9 @@ export function useGymCalculator() {
   const [showResults, setShowResults] = useLocalStorage('gymCalc_showResults', false);
   const [activeTab, setActiveTab] = useLocalStorage('gymCalc_activeTab', 'calculator');
   const [isCalculating, setIsCalculating] = useLocalStorage('gymCalc_isCalculating', false);
+
+  // Training history state
+  const [trainingHistory, setTrainingHistory] = useLocalStorage<TrainingSession[]>('gymCalc_trainingHistory', []);
 
   // Convert bonus inputs to the perks format for calculations
   const createPerksObject = (): TrainingPerks => {
@@ -162,6 +199,9 @@ export function useGymCalculator() {
       if (selectedGymData) {
         const allocationResult = calculateEnergyAllocation(selectedGymData, energyAllocation);
         setAllocationResults(allocationResult);
+        
+        // Save training session to history
+        saveTrainingSession(selectedGym, allocationResult.gainsPerStat);
       }
 
       setShowResults(true);
@@ -169,6 +209,49 @@ export function useGymCalculator() {
     } finally {
       setIsCalculating(false);
     }
+  };
+
+  // History functions
+  const saveTrainingSession = (gymName: string, gains: { str: number; def: number; spd: number; dex: number }) => {
+    const timestamp = Date.now();
+    const session: TrainingSession = {
+      id: `session_${timestamp}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp,
+      date: new Date(timestamp).toISOString(),
+      gym: gymName,
+      stats: { ...stats },
+      gains,
+      energy,
+      happy,
+      perks: {
+        property: Number(propertyPerks) || 0,
+        education: (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0),
+        job: Number(jobPerks) || 0,
+        book: Number(bookPerks) || 0
+      },
+      steadfast: { ...steadfastBonus },
+      totalGain: gains.str + gains.def + gains.spd + gains.dex
+    };
+
+    const updatedHistory = [session, ...trainingHistory].slice(0, 100); // Keep last 100 sessions
+    setTrainingHistory(updatedHistory);
+  };
+
+  const clearTrainingHistory = () => {
+    setTrainingHistory([]);
+  };
+
+  const exportTrainingHistory = () => {
+    const dataStr = JSON.stringify(trainingHistory, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `torn_training_history_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const resetAllSettings = () => {
@@ -194,6 +277,7 @@ export function useGymCalculator() {
       setResults([]);
       setAllocationResults(null);
       setShowResults(false);
+      setTrainingHistory([]);
     }
   };
 
@@ -235,11 +319,16 @@ export function useGymCalculator() {
     setActiveTab,
     isCalculating,
     setIsCalculating,
+    trainingHistory,
+    setTrainingHistory,
     
     // Functions
     createPerksObject,
     calculateEnergyAllocation,
     runSimulation,
-    resetAllSettings
+    resetAllSettings,
+    saveTrainingSession,
+    clearTrainingHistory,
+    exportTrainingHistory
   };
 }

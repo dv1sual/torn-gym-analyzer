@@ -10,6 +10,7 @@ import PerksBonuses from './components/PerksBonuses';
 import FactionSteadfast from './components/FactionSteadfast';
 import Results from './components/Results';
 import SettingsTab from './components/SettingsTab';
+import HistoryTab from './components/HistoryTab';
 import Tooltip from './components/Tooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import NotificationSystem, { useNotifications } from './components/NotificationSystem';
@@ -123,6 +124,32 @@ function AppContent() {
                 }}
               >
                 📈 Results
+              </button>
+              <button 
+                onClick={() => calculator.setActiveTab('history')}
+                style={{
+                  padding: '4px 8px',
+                  backgroundColor: calculator.activeTab === 'history' ? '#88cc88' : '#444444',
+                  border: '1px solid #666666',
+                  color: 'white',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (calculator.activeTab !== 'history') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#555555';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (calculator.activeTab !== 'history') {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#444444';
+                  }
+                }}
+              >
+                📜 History
               </button>
               <button 
                 onClick={() => calculator.setActiveTab('settings')}
@@ -354,6 +381,15 @@ function AppContent() {
             selectedGym={calculator.selectedGym}
             allocationResults={calculator.allocationResults}
             showResults={calculator.showResults}
+            getStatGridColumns={responsive.getStatGridColumns}
+          />
+        )}
+
+        {calculator.activeTab === 'history' && (
+          <HistoryTab
+            trainingHistory={calculator.trainingHistory}
+            onClearHistory={calculator.clearTrainingHistory}
+            onExportHistory={calculator.exportTrainingHistory}
             getStatGridColumns={responsive.getStatGridColumns}
           />
         )}
