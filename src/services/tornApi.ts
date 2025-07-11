@@ -49,7 +49,10 @@ class TornApiService {
   private requestQueue: Array<() => Promise<any>> = [];
   private isProcessingQueue = false;
   private lastRequestTime = 0;
+  private requestHistory: number[] = []; // Track request timestamps
   private readonly MIN_REQUEST_INTERVAL = 600; // 100 requests per minute = 600ms between requests
+  private readonly RATE_LIMIT_WINDOW = 60000; // 1 minute in milliseconds
+  private readonly MAX_REQUESTS_PER_MINUTE = 100;
 
   constructor(config: TornApiConfig) {
     this.config = {
@@ -85,7 +88,8 @@ class TornApiService {
           });
 
           clearTimeout(timeoutId);
-          this.lastRequestTime = Date.now();
+          const requestTime = Date.now();
+          this.lastRequestTime = requestTime;
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -97,10 +101,21 @@ class TornApiService {
             throw new Error(data.error.error || 'API Error');
           }
 
+          // Track this request in our history
+          this.requestHistory.push(requestTime);
+          
+          // Clean up old requests (older than 1 minute)
+          const cutoffTime = requestTime - this.RATE_LIMIT_WINDOW;
+          this.requestHistory = this.requestHistory.filter(time => time > cutoffTime);
+          
+          // Calculate remaining requests based on actual usage
+          const requestsInLastMinute = this.requestHistory.length;
+          const rateLimitRemaining = Math.max(0, this.MAX_REQUESTS_PER_MINUTE - requestsInLastMinute);
+
           resolve({
             success: true,
             data,
-            rateLimitRemaining: parseInt(response.headers.get('X-RateLimit-Remaining') || '0')
+            rateLimitRemaining
           });
 
         } catch (error) {
@@ -158,10 +173,20 @@ class TornApiService {
     this.config.apiKey = newApiKey;
   }
 
-  getRateLimitStatus(): { requestsInQueue: number; lastRequestTime: number } {
+  getRateLimitStatus(): { requestsInQueue: number; lastRequestTime: number; remaining: number; requestsInLastMinute: number } {
+    // Clean up old requests
+    const now = Date.now();
+    const cutoffTime = now - this.RATE_LIMIT_WINDOW;
+    this.requestHistory = this.requestHistory.filter(time => time > cutoffTime);
+    
+    const requestsInLastMinute = this.requestHistory.length;
+    const remaining = Math.max(0, this.MAX_REQUESTS_PER_MINUTE - requestsInLastMinute);
+    
     return {
       requestsInQueue: this.requestQueue.length,
-      lastRequestTime: this.lastRequestTime
+      lastRequestTime: this.lastRequestTime,
+      remaining,
+      requestsInLastMinute
     };
   }
 }

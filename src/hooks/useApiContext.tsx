@@ -230,11 +230,14 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       /* bookkeeping */
       setLastSync(new Date());
-      setRateLimitInfo(prev => ({
-        ...prev,
-        remaining: statsRes.rateLimitRemaining ?? prev.remaining,
-        lastRequest: Date.now(),
-      }));
+      // Update rate limit info from API service
+      if (apiService) {
+        const rateLimitStatus = apiService.getRateLimitStatus();
+        setRateLimitInfo({
+          remaining: rateLimitStatus.remaining,
+          lastRequest: rateLimitStatus.lastRequestTime,
+        });
+      }
       
       console.log('✅ Auto-fill completed!'); // Debug log
       notifications.showSuccess('Auto‑fill completed!');
