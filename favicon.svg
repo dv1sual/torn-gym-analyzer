@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#2a2a2a" stroke="#88cc88" stroke-width="2"/>
+  
+  <!-- Gym dumbbell icon -->
+  <g fill="#88cc88">
+    <!-- Left weight -->
+    <rect x="4" y="12" width="4" height="8" rx="1"/>
+    <!-- Right weight -->
+    <rect x="24" y="12" width="4" height="8" rx="1"/>
+    <!-- Left bar -->
+    <rect x="8" y="14" width="4" height="4" rx="0.5"/>
+    <!-- Right bar -->
+    <rect x="20" y="14" width="4" height="4" rx="0.5"/>
+    <!-- Center bar -->
+    <rect x="12" y="15" width="8" height="2" rx="1"/>
+  </g>
+  
+  <!-- Small stats indicators -->
+  <g fill="#cccccc" font-family="Arial, sans-serif" font-size="6" font-weight="bold">
+    <text x="16" y="8" text-anchor="middle">💪</text>
+    <text x="16" y="28" text-anchor="middle">📊</text>
+  </g>
+</svg>
