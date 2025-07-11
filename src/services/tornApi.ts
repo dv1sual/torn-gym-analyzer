@@ -174,18 +174,147 @@ export const validateApiKey = (apiKey: string): boolean => {
   return /^[a-zA-Z0-9]{16}$/.test(apiKey);
 };
 
-export const encodeApiKey = (apiKey: string): string => {
-  // Simple base64 encoding for storage (not for security, just obfuscation)
-  return btoa(apiKey);
-};
+/**
+ * Derives a consistent encryption key from browser fingerprint
+ */
+async function deriveEncryptionKey(): Promise<CryptoKey> {
+  // Create a consistent seed from browser characteristics
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    new Date().getTimezoneOffset().toString(),
+    'torn-gym-calc-v1' // App-specific salt
+  ].join('|');
 
-export const decodeApiKey = (encodedKey: string): string => {
+  // Hash the fingerprint to create key material
+  const encoder = new TextEncoder();
+  const data = encoder.encode(fingerprint);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+
+  // Import as AES key
+  return crypto.subtle.importKey(
+    'raw',
+    hashBuffer,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+export const encodeApiKey = async (apiKey: string): Promise<string> => {
   try {
-    return atob(encodedKey);
-  } catch {
-    return '';
+    const key = await deriveEncryptionKey();
+    const encoder = new TextEncoder();
+    const data = encoder.encode(apiKey);
+    
+    // Generate random IV for each encryption
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    
+    // Encrypt the API key
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      data
+    );
+
+    // Combine IV + encrypted data and encode as base64
+    const combined = new Uint8Array(iv.length + encrypted.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(encrypted), iv.length);
+    
+    return btoa(String.fromCharCode(...combined));
+  } catch (error) {
+    console.warn('AES encryption failed, falling back to base64:', error);
+    // Graceful fallback to base64 if crypto fails
+    return 'fallback:' + btoa(apiKey);
   }
 };
+
+export const decodeApiKey = async (encodedKey: string): Promise<string> => {
+  try {
+    // Handle fallback case
+    if (encodedKey.startsWith('fallback:')) {
+      return atob(encodedKey.substring(9));
+    }
+
+    const key = await deriveEncryptionKey();
+    const combined = new Uint8Array(
+      atob(encodedKey).split('').map(char => char.charCodeAt(0))
+    );
+
+    // Extract IV and encrypted data
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+
+    // Decrypt
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      encrypted
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
+  } catch (error) {
+    console.warn('AES decryption failed:', error);
+    // Try base64 fallback for old keys
+    try {
+      return atob(encodedKey);
+    } catch {
+      return '';
+    }
+  }
+};
+
+// Convenience functions for easier usage
+export async function validateAndStoreApiKey(apiKey: string): Promise<boolean> {
+  if (!validateApiKey(apiKey)) {
+    return false;
+  }
+
+  try {
+    const encoded = await encodeApiKey(apiKey);
+    localStorage.setItem('tornApiKey', encoded);
+    return true;
+  } catch (error) {
+    console.error('Failed to store API key:', error);
+    return false;
+  }
+}
+
+export async function loadStoredApiKey(): Promise<string> {
+  try {
+    const stored = localStorage.getItem('tornApiKey');
+    if (!stored) return '';
+    
+    return await decodeApiKey(stored);
+  } catch (error) {
+    console.error('Failed to load API key:', error);
+    return '';
+  }
+}
+
+// Migration utility to upgrade existing base64 keys
+export async function migrateOldApiKey(): Promise<boolean> {
+  try {
+    const stored = localStorage.getItem('tornApiKey');
+    if (!stored || stored.includes('fallback:')) return false;
+
+    // Try to decode as base64 (old format)
+    const decoded = atob(stored);
+    if (validateApiKey(decoded)) {
+      // Re-encode with AES
+      const newEncoded = await encodeApiKey(decoded);
+      localStorage.setItem('tornApiKey', newEncoded);
+      console.log('API key migrated to AES encryption');
+      return true;
+    }
+  } catch {
+    // Not old format or migration failed
+  }
+  return false;
+}
 
 // Perk detection utilities
 export const detectPropertyPerks = (propertyPerks: any[]): number => {

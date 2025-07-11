@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApiContext } from '../hooks/useApiContext';
-import { validateApiKey, encodeApiKey, decodeApiKey } from '../services/tornApi';
+import { validateApiKey, validateAndStoreApiKey } from '../services/tornApi';
 import LoadingSpinner from './LoadingSpinner';
 import Tooltip from './Tooltip';
 
@@ -79,13 +79,13 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
   const [showImport, setShowImport] = useState(false);
   const apiContext = useApiContext();
 
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleApiKeyChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newKey = e.target.value.trim();
     apiContext.setApiKey(newKey);
     
     if (validateApiKey(newKey)) {
-      // Save encoded key to localStorage
-      localStorage.setItem('tornApiKey', encodeApiKey(newKey));
+      // Save encrypted key to localStorage
+      await validateAndStoreApiKey(newKey);
       apiContext.initializeApiService(newKey);
     } else {
       apiContext.setIsConnected(false);
@@ -368,7 +368,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
               borderRadius: '2px'
             }}
           >
-            � {showImport ? 'Cancel Import' : 'Import Settings'}
+            📥 {showImport ? 'Cancel Import' : 'Import Settings'}
           </button>
         </div>
 

@@ -10,6 +10,9 @@ import TornApiService, {
   validateApiKey,
   encodeApiKey,
   decodeApiKey,
+  validateAndStoreApiKey,
+  loadStoredApiKey,
+  migrateOldApiKey,
   detectPropertyPerks,
   detectEducationPerks,
   detectJobPerks,
@@ -88,17 +91,24 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [userStats, setUserStats] = useState<Record<string, unknown> | null>(null);
 
   /* ------------------------------------------------------------------
-   * Restore saved API key on boot
+   * Restore saved API key on boot (now with async handling)
    * ------------------------------------------------------------------ */
   useEffect(() => {
-    const saved = localStorage.getItem('tornApiKey');
-    if (!saved) return;
+    const loadKey = async () => {
+      try {
+        const decoded = await loadStoredApiKey();
+        if (!validateApiKey(decoded)) return;
 
-    const decoded = decodeApiKey(saved);
-    if (!validateApiKey(decoded)) return;
+        setApiKey(decoded);
+        initializeApiService(decoded);
+      } catch (error) {
+        console.error('Error loading API key:', error);
+      }
+    };
 
-    setApiKey(decoded);
-    initializeApiService(decoded);
+    // Auto-migrate old keys and load current key
+    migrateOldApiKey();
+    loadKey();
   }, []);
 
   /* helper */
@@ -152,29 +162,46 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setBookPerks: any,
     setSteadfastBonus: any,
     notifications: any
-  ): Promise<void> => {
+  ) => {
+    console.log('🔄 Auto-fill button clicked!'); // Debug log
+    
     if (!apiService || !isConnected) {
+      console.log('❌ Not connected or no API service'); // Debug log
       notifications.showError('Please connect to the API first');
       return;
     }
 
+    console.log('✅ Starting API fetch...'); // Debug log
     setIsLoading(true);
+    
     try {
+      console.log('📡 Making API calls...'); // Debug log
+      
       const [statsRes, perksRes] = await Promise.all([
         apiService.getUserStats(),
         apiService.getUserPerks(),
       ]);
+
+      console.log('📊 Stats Response:', statsRes); // Debug log
+      console.log('🎯 Perks Response:', perksRes); // Debug log
 
       /* stats */
       if (statsRes.success && statsRes.data) {
         const data = statsRes.data as any;
         setUserStats(data);
 
+        console.log('🔍 Full API Response Data:', data); // Debug log
+        console.log('🔍 Response Keys:', Object.keys(data)); // Debug log
+
         const { strength = 0, defense = 0, speed = 0, dexterity = 0 } = data;
+        console.log('💪 Extracted Battle Stats:', { strength, defense, speed, dexterity }); // Debug log
+        
         setStats({ str: strength, def: defense, spd: speed, dex: dexterity });
 
         const happyVal = data.happy?.current ?? data.happy ?? 0;
         const energyVal = data.energy?.current ?? data.energy ?? 0;
+        console.log('😊 Extracted Bars:', { happyVal, energyVal }); // Debug log
+        
         setHappy(happyVal);
         setEnergy(energyVal);
       }
@@ -182,6 +209,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       /* perks */
       if (perksRes.success && perksRes.data) {
         const perks = perksRes.data as any;
+        console.log('🎯 Perks Data:', perks); // Debug log
 
         setPropertyPerks(detectPropertyPerks(perks.property_perks ?? []));
         const edu = detectEducationPerks(perks.education_perks ?? []);
@@ -190,6 +218,14 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setJobPerks(detectJobPerks(perks.job_perks ?? []));
         setBookPerks(detectBookPerks(perks.book_perks ?? []));
         setSteadfastBonus(detectFactionSteadfast(perks.faction_perks ?? []));
+        
+        console.log('🏠 Detected Perks:', { 
+          property: detectPropertyPerks(perks.property_perks ?? []),
+          education: edu,
+          job: detectJobPerks(perks.job_perks ?? []),
+          book: detectBookPerks(perks.book_perks ?? []),
+          steadfast: detectFactionSteadfast(perks.faction_perks ?? [])
+        }); // Debug log
       }
 
       /* bookkeeping */
@@ -199,8 +235,11 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         remaining: statsRes.rateLimitRemaining ?? prev.remaining,
         lastRequest: Date.now(),
       }));
+      
+      console.log('✅ Auto-fill completed!'); // Debug log
       notifications.showSuccess('Auto‑fill completed!');
     } catch (err: any) {
+      console.error('💥 Auto-fill error:', err); // Debug log
       notifications.showError(
         `Failed to fetch user data: ${err instanceof Error ? err.message : 'Unknown error'}`
       );
