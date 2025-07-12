@@ -5,6 +5,7 @@ import { ApiProvider } from './hooks/useApiContext';
 import StatInput from './components/StatInput';
 import TrainingSetup from './components/TrainingSetup';
 import GymSelector from './components/GymSelector';
+import GymSelectorDropdown from './components/GymSelectorDropdown';
 import EnergyAllocation from './components/EnergyAllocation';
 import PerksBonuses from './components/PerksBonuses';
 import FactionSteadfast from './components/FactionSteadfast';
@@ -320,11 +321,9 @@ function AppContent() {
             />
 
             {/* Gym Selection */}
-            <GymSelector
+            <GymSelectorDropdown
               selectedGym={calculator.selectedGym}
               onGymSelect={calculator.setSelectedGym}
-              screenSize={responsive.screenSize}
-              getGymGridColumns={responsive.getGymGridColumns}
             />
 
             {/* Energy Allocation */}

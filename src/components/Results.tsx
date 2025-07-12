@@ -106,8 +106,16 @@ const ResultsOriginal: React.FC<ResultsOriginalProps> = ({
         padding: '12px'
       }}>
         <h3 style={{color: '#88cc88', fontSize: '13px', margin: '0 0 8px 0'}}>
-          🏆 Top 10 Gyms (All Energy)
+          🏆 Top 10 Gyms (All Energy on Best Stat)
         </h3>
+        <div style={{
+          fontSize: '11px',
+          color: '#999999',
+          marginBottom: '8px',
+          fontStyle: 'italic'
+        }}>
+          Shows maximum gain if you spent all your energy training only the best stat at each gym
+        </div>
         {sorted.map((gym, index) => (
           <div key={gym.name} style={{
             display: 'flex',
