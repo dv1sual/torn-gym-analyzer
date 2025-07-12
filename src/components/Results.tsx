@@ -83,7 +83,12 @@ const ResultsOriginal: React.FC<ResultsOriginalProps> = ({
                 textAlign: 'center'
               }}>
                 <div style={{color: '#88cc88', fontSize: '12px', fontWeight: 'bold'}}>{stat.toUpperCase()}</div>
-                <div style={{color: 'white', fontSize: '16px', fontWeight: 'bold'}}>+{allocationResults.gainsPerStat[stat].toFixed(2)}</div>
+                <div style={{color: 'white', fontSize: '16px', fontWeight: 'bold'}}>
+                  +{allocationResults.gainsPerStat[stat] >= 1000000 
+                    ? allocationResults.gainsPerStat[stat].toLocaleString('en-US', { maximumFractionDigits: 2 })
+                    : allocationResults.gainsPerStat[stat].toFixed(2)
+                  }
+                </div>
                 <div style={{color: '#999999', fontSize: '10px'}}>Energy: {allocationResults.energyPerStat[stat]} | Trains: {allocationResults.trainsPerStat[stat]}</div>
               </div>
             ))}
@@ -94,7 +99,10 @@ const ResultsOriginal: React.FC<ResultsOriginalProps> = ({
             fontSize: '14px',
             fontWeight: 'bold'
           }}>
-            Total Allocated Gain: +{allocationResults.totalGain.toFixed(2)}
+            Total Allocated Gain: +{allocationResults.totalGain >= 1000000 
+              ? allocationResults.totalGain.toLocaleString('en-US', { maximumFractionDigits: 2 })
+              : allocationResults.totalGain.toFixed(2)
+            }
           </div>
         </div>
       )}
@@ -130,7 +138,10 @@ const ResultsOriginal: React.FC<ResultsOriginalProps> = ({
               #{index + 1} {gym.name}
             </span>
             <span style={{color: '#88cc88', fontSize: '12px', fontWeight: 'bold'}}>
-              {gym.total.toFixed(2)}
+              {gym.total >= 1000000 
+                ? gym.total.toLocaleString('en-US', { maximumFractionDigits: 2 })
+                : gym.total.toFixed(2)
+              }
             </span>
           </div>
         ))}
