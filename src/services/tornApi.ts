@@ -373,16 +373,17 @@ export const detectEducationPerks = (educationPerks: any[]): { general: number; 
     const perkText = typeof perk === 'string' ? perk : perk?.name || perk?.description || '';
     
     // Look for gym gains percentage in education perks
-    // Examples: "+ 5% gym gains", "+ 10% strength gym gains", etc.
+    // Examples: "+ 1% gym gains", "+ 5% gym gains", "+ 10% strength gym gains", etc.
     const gymGainsMatch = perkText.match(/\+\s*(\d+(?:\.\d+)?)%\s+(?:(\w+)\s+)?gym\s+gains/i);
     
     if (gymGainsMatch) {
       const percentage = parseFloat(gymGainsMatch[1]);
       const statSpecific = gymGainsMatch[2]; // Could be "strength", "defense", etc.
       
-      if (statSpecific) {
-        // Stat-specific education perk
-        specific += percentage;
+      if (statSpecific && ['strength', 'defense', 'speed', 'dexterity', 'str', 'def', 'spd', 'dex'].includes(statSpecific.toLowerCase())) {
+        // Stat-specific education perk - only count the highest one
+        // This prevents multiple stat-specific perks from being summed incorrectly
+        specific = Math.max(specific, percentage);
       } else {
         // General gym gains perk
         general += percentage;
