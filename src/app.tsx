@@ -30,7 +30,7 @@ function AppContent() {
       minHeight: '100vh',
       backgroundColor: '#191919',
       color: '#cccccc',
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
       display: 'flex',
       justifyContent: 'center'
     }}>
