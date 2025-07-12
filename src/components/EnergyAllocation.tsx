@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 type StatAllocation = {
   str: number;
@@ -18,6 +18,32 @@ const EnergyAllocation: React.FC<EnergyAllocationProps> = ({
   setEnergyAllocation, 
   getStatGridColumns 
 }) => {
+  const [inputValues, setInputValues] = useState({
+    str: energyAllocation.str.toString(),
+    def: energyAllocation.def.toString(),
+    spd: energyAllocation.spd.toString(),
+    dex: energyAllocation.dex.toString()
+  });
+
+  useEffect(() => {
+    setInputValues({
+      str: energyAllocation.str.toString(),
+      def: energyAllocation.def.toString(),
+      spd: energyAllocation.spd.toString(),
+      dex: energyAllocation.dex.toString()
+    });
+  }, [energyAllocation]);
+
+  const handleInputChange = (stat: keyof StatAllocation, value: string) => {
+    setInputValues(prev => ({ ...prev, [stat]: value }));
+  };
+
+  const handleInputBlur = (stat: keyof StatAllocation, value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value) || 0;
+    setEnergyAllocation({ ...energyAllocation, [stat]: numValue });
+    setInputValues(prev => ({ ...prev, [stat]: numValue.toString() }));
+  };
+
   const totalAllocation = energyAllocation.str + energyAllocation.def + energyAllocation.spd + energyAllocation.dex;
 
   return (
@@ -38,8 +64,10 @@ const EnergyAllocation: React.FC<EnergyAllocationProps> = ({
             </label>
             <input
               type="number"
-              value={energyAllocation[stat] || ''}
-              onChange={(e) => setEnergyAllocation({...energyAllocation, [stat]: parseInt(e.target.value) || 0})}
+              value={inputValues[stat]}
+              onChange={(e) => handleInputChange(stat, e.target.value)}
+              onBlur={(e) => handleInputBlur(stat, e.target.value)}
+              placeholder="0"
               style={{
                 width: '100%',
                 backgroundColor: '#222222',

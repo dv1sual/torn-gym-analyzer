@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PerksBonusesProps {
   propertyPerks: number;
@@ -27,6 +27,34 @@ const PerksBonuses: React.FC<PerksBonusesProps> = ({
   setBookPerks,
   getPerksGridColumns
 }) => {
+  const [inputValues, setInputValues] = useState({
+    propertyPerks: propertyPerks.toString(),
+    educationStatSpecific: educationStatSpecific.toString(),
+    educationGeneral: educationGeneral.toString(),
+    jobPerks: jobPerks.toString(),
+    bookPerks: bookPerks.toString()
+  });
+
+  useEffect(() => {
+    setInputValues({
+      propertyPerks: propertyPerks.toString(),
+      educationStatSpecific: educationStatSpecific.toString(),
+      educationGeneral: educationGeneral.toString(),
+      jobPerks: jobPerks.toString(),
+      bookPerks: bookPerks.toString()
+    });
+  }, [propertyPerks, educationStatSpecific, educationGeneral, jobPerks, bookPerks]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setInputValues(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleInputBlur = (field: string, value: string, setter: (value: number) => void) => {
+    const numValue = value === '' ? 0 : parseFloat(value) || 0;
+    setter(numValue);
+    setInputValues(prev => ({ ...prev, [field]: numValue.toString() }));
+  };
+
   const totalBonus = (Number(propertyPerks) || 0) + (Number(educationStatSpecific) || 0) + (Number(educationGeneral) || 0) + (Number(jobPerks) || 0) + (Number(bookPerks) || 0);
 
   return (
@@ -46,8 +74,10 @@ const PerksBonuses: React.FC<PerksBonusesProps> = ({
           </label>
           <input
             type="number"
-            value={propertyPerks}
-            onChange={(e) => setPropertyPerks(parseFloat(e.target.value) || 0)}
+            value={inputValues.propertyPerks}
+            onChange={(e) => handleInputChange('propertyPerks', e.target.value)}
+            onBlur={(e) => handleInputBlur('propertyPerks', e.target.value, setPropertyPerks)}
+            placeholder="0"
             style={{
               width: '100%',
               backgroundColor: '#222222',
@@ -64,8 +94,10 @@ const PerksBonuses: React.FC<PerksBonusesProps> = ({
           </label>
           <input
             type="number"
-            value={educationStatSpecific}
-            onChange={(e) => setEducationStatSpecific(parseFloat(e.target.value) || 0)}
+            value={inputValues.educationStatSpecific}
+            onChange={(e) => handleInputChange('educationStatSpecific', e.target.value)}
+            onBlur={(e) => handleInputBlur('educationStatSpecific', e.target.value, setEducationStatSpecific)}
+            placeholder="0"
             style={{
               width: '100%',
               backgroundColor: '#222222',
@@ -82,8 +114,10 @@ const PerksBonuses: React.FC<PerksBonusesProps> = ({
           </label>
           <input
             type="number"
-            value={educationGeneral}
-            onChange={(e) => setEducationGeneral(parseFloat(e.target.value) || 0)}
+            value={inputValues.educationGeneral}
+            onChange={(e) => handleInputChange('educationGeneral', e.target.value)}
+            onBlur={(e) => handleInputBlur('educationGeneral', e.target.value, setEducationGeneral)}
+            placeholder="0"
             style={{
               width: '100%',
               backgroundColor: '#222222',
@@ -100,8 +134,10 @@ const PerksBonuses: React.FC<PerksBonusesProps> = ({
           </label>
           <input
             type="number"
-            value={jobPerks}
-            onChange={(e) => setJobPerks(parseFloat(e.target.value) || 0)}
+            value={inputValues.jobPerks}
+            onChange={(e) => handleInputChange('jobPerks', e.target.value)}
+            onBlur={(e) => handleInputBlur('jobPerks', e.target.value, setJobPerks)}
+            placeholder="0"
             style={{
               width: '100%',
               backgroundColor: '#222222',
@@ -118,8 +154,10 @@ const PerksBonuses: React.FC<PerksBonusesProps> = ({
           </label>
           <input
             type="number"
-            value={bookPerks}
-            onChange={(e) => setBookPerks(parseFloat(e.target.value) || 0)}
+            value={inputValues.bookPerks}
+            onChange={(e) => handleInputChange('bookPerks', e.target.value)}
+            onBlur={(e) => handleInputBlur('bookPerks', e.target.value, setBookPerks)}
+            placeholder="0"
             style={{
               width: '100%',
               backgroundColor: '#222222',
